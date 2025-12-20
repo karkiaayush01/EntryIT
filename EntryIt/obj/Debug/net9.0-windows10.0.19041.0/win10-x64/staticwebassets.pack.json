@@ -1,0 +1,45 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\Studies\\College Materials\\Year 3\\CS6004NI_Application_Development\\Assignment\\Sem1Assignment\\EntryIt\\EntryIt\\obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\scopedcss\\bundle\\EntryIt.styles.css",
+      "PackagePath": "staticwebassets\\EntryIt.styles.css"
+    },
+    {
+      "Id": "D:\\Studies\\College Materials\\Year 3\\CS6004NI_Application_Development\\Assignment\\Sem1Assignment\\EntryIt\\EntryIt\\wwwroot\\css\\app.css",
+      "PackagePath": "staticwebassets\\css\\app.css"
+    },
+    {
+      "Id": "D:\\Studies\\College Materials\\Year 3\\CS6004NI_Application_Development\\Assignment\\Sem1Assignment\\EntryIt\\EntryIt\\wwwroot\\css\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "D:\\Studies\\College Materials\\Year 3\\CS6004NI_Application_Development\\Assignment\\Sem1Assignment\\EntryIt\\EntryIt\\wwwroot\\css\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "D:\\Studies\\College Materials\\Year 3\\CS6004NI_Application_Development\\Assignment\\Sem1Assignment\\EntryIt\\EntryIt\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\staticwebassets\\msbuild.EntryIt.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\staticwebassets\\msbuild.EntryIt.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\staticwebassets\\msbuild.build.EntryIt.props",
+      "PackagePath": "build\\EntryIt.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\staticwebassets\\msbuild.buildMultiTargeting.EntryIt.props",
+      "PackagePath": "buildMultiTargeting\\EntryIt.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-windows10.0.19041.0\\win10-x64\\staticwebassets\\msbuild.buildTransitive.EntryIt.props",
+      "PackagePath": "buildTransitive\\EntryIt.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
