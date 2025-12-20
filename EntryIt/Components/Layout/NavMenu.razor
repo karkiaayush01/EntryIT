@@ -1,27 +1,53 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">EntryIt</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+﻿<div class="nav-scrollable bg-accent" style="height: calc(100% - 20px); padding-top: 20px">
+    <nav style="height: 100%; display: flex; flex-direction: column; justify-content:space-between;">
+        <div>
+            <img class="logo px-3" src="assets/app_logos/logo-white.svg" alt="Logo" />
+        
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" style="text-decoration:none; display:flex; gap:8px; padding-left: 8px;" href="" Match="NavLinkMatch.All">
+                    <img class="nav-item-img" src="assets/icons/home.svg"/>
+                    <span class="nav-item-text">Home</span>
+                </NavLink>
+            </div>
+        
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" style="text-decoration: none; display: flex; gap: 8px; padding-left: 8px;" href="/counter" Match="NavLinkMatch.All">
+                    <img class="nav-item-img" src="assets/icons/notebook.svg"/>
+                    <span class="nav-item-text">Journals</span>
+                </NavLink>
+            </div>
+        
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" style="text-decoration: none; display: flex; gap: 8px; padding-left: 8px;" href="/weather" Match="NavLinkMatch.All">
+                    <img class="nav-item-img" src="assets/icons/analytics.svg"/>
+                    <span class="nav-item-text">Analytics</span>
+                </NavLink>
+            </div>
+        
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" style="text-decoration: none; display: flex; gap: 8px; padding-left: 8px;" href="/tags" Match="NavLinkMatch.All">
+                    <img class="nav-item-img" src="assets/icons/tag.svg"/>
+                    <span class="nav-item-text">Custom Tags</span>
+                </NavLink>
+            </div>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
+
+        <div class="user-profile px-3">
+            <div class="user-avatar">AK</div>
+            <span class="user-name">Aayush Karki</span>
+            <button class="theme-toggle" @onclick="ToggleTheme" aria-label="Toggle theme">
+                <img src="assets/icons/sun.svg" />
+            </button>
         </div>
     </nav>
 </div>
+
+@code {
+    string ActiveTab { get; set; } = "home";
+
+    private void ToggleTheme()
+    {
+        // Implement theme toggle logic here
+        // This could interact with a theme service or state management
+    }
+}

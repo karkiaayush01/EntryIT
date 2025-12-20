@@ -1,0 +1,255 @@
+﻿/* Home Container */
+.home-container {
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 2rem;
+}
+
+/* Header */
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Streak Counter */
+.streak-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background-color: #FFF4E6;
+    padding: 0.5rem 0.875rem;
+    border-radius: 20px;
+}
+
+.fire-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.streak-number {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #FF6B35;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--gradient_bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 0.875rem;
+}
+
+/* Main Content */
+.home-content {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 2rem;
+}
+
+.journal-section {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* App Branding */
+.app-branding {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.app-logo {
+    width: 3.5rem;
+    height: 3.5rem;
+}
+
+.app-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+
+/* Journal Entry */
+.journal-entry {
+    width: 100%;
+}
+
+.journal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    color: var(--text);
+}
+
+.journal-input-wrapper {
+    background-color: white;
+    border: 1px solid #E5E5E5;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.journal-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+    background-color: transparent;
+    padding: 0.5rem;
+    min-height: 120px;
+}
+
+    .journal-textarea::placeholder {
+        color: #B0B0B0;
+    }
+
+/* Toolbar */
+.journal-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #F0F0F0;
+    margin-top: 0.75rem;
+}
+
+.formatting-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.format-btn {
+    background: none;
+    border: none;
+    padding: 0.375rem 0.625rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #333;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+    .format-btn:hover {
+        background-color: #F5F5F5;
+    }
+
+    .format-btn:active {
+        background-color: #E8E8E8;
+    }
+
+/* Submit Button */
+.submit-btn {
+    background: var(--gradient_bg);
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
+}
+
+    .submit-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(78, 84, 200, 0.4);
+    }
+
+    .submit-btn:active {
+        transform: scale(0.95);
+    }
+
+.submit-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    filter: brightness(0) invert(1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .home-container {
+        padding: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .app-name {
+        font-size: 2rem;
+    }
+
+    .app-logo {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .journal-section {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-container {
+        padding: 1rem;
+    }
+
+    .home-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .streak-counter {
+        padding: 0.375rem 0.625rem;
+    }
+
+    .user-avatar {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.75rem;
+    }
+
+    .app-branding {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .app-name {
+        font-size: 1.75rem;
+    }
+}

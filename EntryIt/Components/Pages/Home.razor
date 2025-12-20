@@ -1,5 +1,74 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+<div class="home-container">
+    <div class="home-header">
+        <h1 class="page-title">Home</h1>
+        <div class="header-actions">
+            <div class="streak-counter">
+                <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
+                <span class="streak-number">16</span>
+            </div>
+            <div class="user-avatar">AK</div>
+        </div>
+    </div>
 
-Welcome to EntryIT.
+    <div class="home-content">
+        <div class="journal-section">
+            <div class="app-branding">
+                <img src="assets/app_logos/logo-sunset.svg" alt="Entry IT" class="app-logo" />
+                <h2 class="app-name">Entry IT</h2>
+            </div>
+
+            <div class="journal-entry">
+                <h3 class="journal-title">Today's Journal</h3>
+                <div class="journal-input-wrapper">
+                    <textarea 
+                        class="journal-textarea" 
+                        placeholder="What's on your mind?"
+                        rows="5"
+                        @bind="journalEntry"
+                        @bind:event="oninput"
+                    ></textarea>
+                    
+                    <div class="journal-toolbar">
+                        <div class="formatting-buttons">
+                            <button class="format-btn" title="Bold" >
+                                <strong>B</strong>
+                            </button>
+                            <button class="format-btn" title="Italic" >
+                                <em>I</em>
+                            </button>
+                            <button class="format-btn" title="Underline">
+                                <u>U</u>
+                            </button>
+                        </div>
+                        
+                        <button class="submit-btn" @onclick="SubmitJournal" title="Submit">
+                            <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string journalEntry = "";
+
+    private void ApplyFormat(string format)
+    {
+        // Format logic can be implemented here
+        // For now, this is a placeholder
+    }
+
+    private void SubmitJournal()
+    {
+        if (!string.IsNullOrWhiteSpace(journalEntry))
+        {
+            // Submit journal entry logic
+            // Clear after submission
+            journalEntry = "";
+        }
+    }
+}
