@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject ThemeService ThemeService
 
-<div class="page">
+<div class="@($"page theme-{currentTheme} accent-{currentAccent}")">
     <div class="sidebar">
         <NavMenu />
     </div>
@@ -11,3 +12,30 @@
         </article>
     </main>
 </div>
+
+
+@code {
+    string currentTheme = string.Empty;
+    string currentAccent = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+
+        // Subscribe to theme changes
+        ThemeService.OnChange += UpdateTheme;
+    }
+
+    void UpdateTheme()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= UpdateTheme;
+    }
+}

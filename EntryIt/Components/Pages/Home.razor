@@ -1,4 +1,6 @@
 ﻿@page "/"
+@inject ThemeService ThemeService;
+@inject ILoggerService LoggerService;
 
 <div class="home-container">
     <div class="home-header">
@@ -15,7 +17,7 @@
     <div class="home-content">
         <div class="journal-section">
             <div class="app-branding">
-                <img src="assets/app_logos/logo-sunset.svg" alt="Entry IT" class="app-logo" />
+                <img src=@($"assets/app_logos/logo-{currentAccent}.svg") alt="Entry IT" class="app-logo" />
                 <h2 class="app-name">Entry IT</h2>
             </div>
 
@@ -55,6 +57,7 @@
 
 @code {
     private string journalEntry = "";
+    private string currentAccent = string.Empty;
 
     private void ApplyFormat(string format)
     {
@@ -70,5 +73,22 @@
             // Clear after submission
             journalEntry = "";
         }
+    }
+
+    protected override void OnInitialized()
+    {
+        currentAccent = ThemeService.GetCurrentAccent();
+        ThemeService.OnChange += HandleThemeChanged;
+    }
+
+    private void HandleThemeChanged()
+    {
+        currentAccent = ThemeService.GetCurrentAccent();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= HandleThemeChanged;
     }
 }

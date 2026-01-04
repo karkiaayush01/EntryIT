@@ -1,0 +1,140 @@
+.theme-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 16px 4px 0px 4px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    width: 200px;
+    border: 1px solid var(--text);
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+/* Mode Selection Styles */
+.theme-mode-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.mode-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .mode-button:hover {
+        border-color: var(--text);
+        transform: translateY(-2px);
+    }
+
+    .mode-button.active {
+        background: var(--primary);
+        color: var(--bg-primary);
+    }
+
+.mode-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.theme-light .theme-selector-icon {
+    filter: brightness(0) invert(1);
+}
+
+
+.theme-selector-icon {
+    filter: brightness(0) invert(1);
+}
+
+
+/* Accent Selection Styles */
+.theme-accent-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.accent-options {
+    display: flex;
+    flex-direction: column;
+}
+
+.accent-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+    .accent-button:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+        background: var(--hover-bg);
+    }
+
+    .accent-button.active {
+        background: var(--theme-selector-active-bg);
+    }
+
+    .accent-button.active .accent-label {
+        color: white;
+    }
+
+.accent-color {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--g)
+}
+
+.accent-default {
+    background: linear-gradient(29.864deg, #4E54C8 38%, #8F94FB 75%);
+}
+
+.accent-peach {
+    background: linear-gradient(29.864deg, #FF7E5F 47%, #FFDAB9 87%);
+}
+
+.accent-ocean {
+    background: linear-gradient(29.864deg, #00C6FF 38%, #0072FF 75%);
+}
+
+.accent-sunset {
+    background: linear-gradient(29.864deg, #FF5F6D 18%, #FFC371 75%);
+}
+
+.accent-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .theme-selector {
+        max-width: 100%;
+    }
+}

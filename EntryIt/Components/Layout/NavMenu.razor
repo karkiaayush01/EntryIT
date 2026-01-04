@@ -1,4 +1,9 @@
-﻿<div class="nav-scrollable bg-accent" style="height: calc(100% - 20px); padding-top: 20px">
+﻿@using Microsoft.Extensions.Logging
+@inject ThemeService ThemeService;
+@inject ILogger<NavMenu> Logger;
+@using EntryIt.Components.Shared;
+
+<div class="nav-scrollable bg-accent" style="height: calc(100% - 20px); padding-top: 20px">
     <nav style="height: 100%; display: flex; flex-direction: column; justify-content:space-between;">
         <div>
             <img class="logo px-3" src="assets/app_logos/logo-white.svg" alt="Logo" />
@@ -35,9 +40,22 @@
         <div class="user-profile px-3">
             <div class="user-avatar">AK</div>
             <span class="user-name">Aayush Karki</span>
-            <button class="theme-toggle" @onclick="ToggleTheme" aria-label="Toggle theme">
-                <img src="assets/icons/sun.svg" />
+            <button class="theme-toggle" @onclick="ToggleThemeSelector" aria-label="Toggle theme">
+                <img 
+                    class="theme-icon"
+                    src="@($"assets/icons/{(ThemeService.GetCurrentTheme() == "light" ? "sun.svg" : "moon.svg")}")" 
+                />
             </button>
+    
+            @if (showThemeSelector)
+            {
+                <div class="overlay" @onclick="CloseThemeSelector">
+                </div>
+
+                <div class="theme-selector-popup" @onclick:stopPropagation>
+                    <ThemeSelector />
+                </div>
+            }
         </div>
     </nav>
 </div>
@@ -45,9 +63,33 @@
 @code {
     string ActiveTab { get; set; } = "home";
 
+    private bool showThemeSelector = false;
+
+    private void ToggleThemeSelector()
+    {
+        showThemeSelector = !showThemeSelector;
+    }
+
+    private void CloseThemeSelector()
+    {
+        showThemeSelector = false;
+    }
+
     private void ToggleTheme()
     {
         // Implement theme toggle logic here
         // This could interact with a theme service or state management
+
+        string currentTheme = ThemeService.GetCurrentTheme();
+        Logger.LogInformation("Theme before: {Theme}", currentTheme);
+        if (currentTheme == "light")
+        {
+            ThemeService.SetCurrentTheme("dark");
+        }
+        else
+        {
+            ThemeService.SetCurrentTheme("light");
+        }
+
     }
 }

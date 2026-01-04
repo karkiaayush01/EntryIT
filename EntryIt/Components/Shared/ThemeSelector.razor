@@ -1,0 +1,91 @@
+﻿@inject ThemeService ThemeService
+@inject ILoggerService LoggerService;
+
+<div class="theme-selector">
+    <div class="theme-mode-section">
+        <h3 class="section-title">Select Mode</h3>
+        <div class="mode-options">
+            <button 
+                class="mode-button @(currentTheme == "light" ? "active" : "")"
+                @onclick='() => SelectTheme("light")'
+                aria-label="Light mode">
+                <img src="@($"assets/icons/sun.svg")" />
+            </button>
+            <button 
+                class="mode-button @(currentTheme == "dark" ? "active" : "")"
+                @onclick='() => SelectTheme("dark")'
+                aria-label="Dark mode">
+                <img src="@($"assets/icons/{(currentTheme == "dark" ? "moon.svg" : "moon-dark.svg")}")" />
+            </button>
+        </div>
+    </div>
+
+    <div class="theme-accent-section">
+        <h3 class="section-title">Select Accent</h3>
+        <div class="accent-options">
+            <button 
+                class="accent-button @(currentAccent == "default" ? "active" : "")"
+                @onclick='() => SelectAccent("default")'
+                aria-label="Default accent">
+                <span class="accent-color accent-default"></span>
+                <span class="accent-label">Default</span>
+            </button>
+            <button 
+                class="accent-button @(currentAccent == "peach" ? "active" : "")"
+                @onclick='() => SelectAccent("peach")'
+                aria-label="Peach accent">
+                <span class="accent-color accent-peach"></span>
+                <span class="accent-label text-primary">Peach</span>
+            </button>
+            <button 
+                class="accent-button @(currentAccent == "ocean" ? "active" : "")"
+                @onclick='() => SelectAccent("ocean")'
+                aria-label="Ocean accent">
+                <span class="accent-color accent-ocean"></span>
+                <span class="accent-label">Ocean</span>
+            </button>
+            <button 
+                class="accent-button @(currentAccent == "sunset" ? "active" : "")"
+                @onclick='() => SelectAccent("sunset")'
+                aria-label="Sunset accent">
+                <span class="accent-color accent-sunset"></span>
+                <span class="accent-label">Sunset</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string currentTheme = string.Empty;
+    private string currentAccent = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+        ThemeService.OnChange += HandleThemeChanged;
+    }
+
+    private void SelectTheme(string theme)
+    {
+        ThemeService.SetCurrentTheme(theme);
+    }
+
+    private void SelectAccent(string accent)
+    {
+        ThemeService.SetCurrentAccent(accent);
+    }
+
+    private void HandleThemeChanged()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+        LoggerService.LogInfo($"Application theme changed:\nTheme: {currentTheme}\nAccent: {currentAccent}");
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= HandleThemeChanged;
+    }
+}
