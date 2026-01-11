@@ -20,7 +20,7 @@ namespace EntryIt
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Services.AddSingleton<ThemeService>();
-            builder.Services.AddSingleton<ILoggerService, LoggerService>(); ;
+            builder.Services.AddSingleton<ILoggerService, LoggerService>();
     		builder.Logging.AddDebug();
 #endif
 

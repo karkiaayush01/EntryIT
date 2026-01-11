@@ -132,3 +132,30 @@ html, body, .page {
     padding-left: 0.75rem; /* 12px */
     padding-right: 0.75rem; /* 12px */
 }
+
+/* Quill toolbar icons */
+.ql-toolbar button svg .ql-stroke,
+.ql-toolbar .ql-picker-label svg .ql-stroke {
+    stroke: var(--text);
+}
+
+.ql-toolbar button svg .ql-fill,
+.ql-toolbar .ql-picker-label svg .ql-fill {
+    fill: var(--text);
+}
+
+/* Selected heading text */
+.ql-toolbar .ql-picker-label {
+    color: var(--text);
+}
+
+.ql-snow.ql-toolbar .ql-picker-options,
+.ql-snow .ql-toolbar .ql-picker-options {
+    background-color: var(--bg);
+}
+
+.ql-snow .ql-picker-options .ql-picker-item {
+    color: var(--text);
+}
+
+

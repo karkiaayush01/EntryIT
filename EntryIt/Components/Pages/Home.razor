@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject ThemeService ThemeService;
 @inject ILoggerService LoggerService;
+@inject IJSRuntime JS;
 
 <div class="home-container">
     <div class="home-header">
@@ -24,7 +25,7 @@
             <div class="journal-entry">
                 <h3 class="journal-title">Today's Journal</h3>
                 <div class="journal-input-wrapper">
-                    <textarea 
+                    @* <textarea 
                         class="journal-textarea" 
                         placeholder="What's on your mind?"
                         rows="5"
@@ -48,6 +49,12 @@
                         <button class="submit-btn" @onclick="SubmitJournal" title="Submit">
                             <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
                         </button>
+                    </div> *@
+
+                    <div 
+                        id="editor"
+                        style="height:200px;"
+                    >
                     </div>
                 </div>
             </div>
@@ -58,11 +65,21 @@
 @code {
     private string journalEntry = "";
     private string currentAccent = string.Empty;
+    private string HtmlContent = "";
 
-    private void ApplyFormat(string format)
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Format logic can be implemented here
-        // For now, this is a placeholder
+        if(firstRender)
+        {
+            await JS.InvokeVoidAsync("initQuill", "editor");
+        }
+    }
+
+    private async Task Save()
+    {
+        HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
     }
 
     private void SubmitJournal()

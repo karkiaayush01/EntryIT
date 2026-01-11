@@ -2,7 +2,7 @@
 
 namespace EntryIt.Services
 {
-    public interface ILoggerService
+    public interface ILoggerService 
     {
         void LogInfo(string message);
         void LogWarning(string message);
