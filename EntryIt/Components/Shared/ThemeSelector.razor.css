@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: 24px;
     padding: 16px 4px 0px 4px;
-    background: var(--bg-primary);
+    background: var(--bg);
     border-radius: 12px;
     width: 200px;
     border: 1px solid var(--text);

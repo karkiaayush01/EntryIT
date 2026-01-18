@@ -1,0 +1,143 @@
+﻿@page "/signup"
+
+@inject ThemeService ThemeService
+@inject ILoggerService LoggerService
+@inject IAuthService AuthService
+@inject ToastService Toast
+@inject NavigationManager Nav
+
+@layout Layout.AuthLayout
+
+<div class="login-page bg-accent-radial">
+    <button class="theme-toggle-fixed" @onclick="ToggleThemeSelector" aria-label="Toggle theme">
+        <img 
+            class="theme-icon"
+            src="@($"assets/icons/{(ThemeService.GetCurrentTheme() == "light" ? "sun.svg" : "moon.svg")}")" 
+            alt="Theme toggle"
+        />
+    </button>
+    
+    @if (showThemeSelector)
+    {
+            <div class="overlay" @onclick="CloseThemeSelector"></div>
+            <div class="theme-selector-popup-fixed" @onclick:stopPropagation>
+                <ThemeSelector />
+            </div>
+    }
+    
+    <div class="login-container">
+        <div class="app-branding">
+            <img src="assets/app_logos/logo-white.svg" alt="Entry IT" class="app-logo" />
+            <h2 class="app-name">Entry IT</h2>
+        </div>
+        
+        <div class="login-form-container">
+            <h2 class="form-header">Sign Up</h2>
+            
+            <form @onsubmit="SignUpUser" class="login-form">
+                <div class="form-field">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" name="fullName" id="fullName" @bind="fullName" required />
+                </div>
+                
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" @bind="email" @bind:event="oninput" @onchange="OnEmailChange" required />
+                </div>
+                
+                <div class="form-field">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" @bind="username" required />
+                </div>
+                
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" @bind="password" required />
+                </div>
+                
+                <div class="form-field">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" name="confirmPassword" id="confirmPassword" @bind="confirmPassword" required />
+                </div>
+                
+                <button type="submit" class="bg-accent login-btn">Sign Up</button>
+            </form>
+            
+            <NavLink class="signup-link" href="/login" Match="NavLinkMatch.All">
+                <span class="signup-link-text">Already have an account? Login</span>
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string fullName = string.Empty;
+    private string email = string.Empty;
+    private string username = string.Empty;
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+    private bool showThemeSelector = false;
+    private bool isUsernameManuallyEdited = false;
+
+    private string CurrentAccent => ThemeService.GetCurrentAccent();
+
+    private void OnEmailChange()
+    {
+        if (!isUsernameManuallyEdited && !string.IsNullOrWhiteSpace(email))
+        {
+            username = ExtractUsernameFromEmail(email);
+        }
+    }
+
+    private string ExtractUsernameFromEmail(string emailAddress)
+    {
+        if (string.IsNullOrWhiteSpace(emailAddress))
+            return string.Empty;
+
+        var atIndex = emailAddress.IndexOf('@');
+        return atIndex > 0 ? emailAddress.Substring(0, atIndex) : emailAddress;
+    }
+
+    private async Task SignUpUser()
+    {
+        // Validate passwords match
+        if (password != confirmPassword)
+        {
+            Toast.Error("Passwords do not match");
+            return;
+        }
+
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) ||
+            string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            Toast.Error("Please fill in all fields");
+            return;
+        }
+
+        Toast.Info("Creating account...");
+        
+        var result = await AuthService.SignUp(fullName, email, username, password);
+        
+        if (result.Success)
+        {
+            Toast.Success("Account created successfully");
+            await Task.Delay(500);
+            Nav.NavigateTo("/login");
+        }
+        else
+        {
+            Toast.Error(result.ErrorMessage ?? "Sign up failed");
+        }
+    }
+
+    private void ToggleThemeSelector()
+    {
+        showThemeSelector = !showThemeSelector;
+    }
+
+    private void CloseThemeSelector()
+    {
+        showThemeSelector = false;
+    }
+}

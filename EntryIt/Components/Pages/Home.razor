@@ -1,7 +1,9 @@
-﻿@page "/"
-@inject ThemeService ThemeService;
-@inject ILoggerService LoggerService;
-@inject IJSRuntime JS;
+﻿@page "/home"
+@inject ThemeService ThemeService
+@inject ILoggerService LoggerService
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject ToastService Toast
 
 <div class="home-container">
     <div class="home-header">
@@ -73,9 +75,15 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(firstRender)
+        if (firstRender)
         {
             await JS.InvokeVoidAsync("initQuill", "editor");
+            var uri = new Uri(Nav.Uri);
+            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            if (queryParams["from_login"] == "true")
+            {
+                Toast.Success("Login successful!");
+            }
         }
     }
 

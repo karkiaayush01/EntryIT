@@ -1,0 +1,21 @@
+﻿@page "/"
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        var currentUser = AuthService.GetCurrentUser();
+
+        if (currentUser != null)
+        {
+            // User is logged in → redirect to home
+            Nav.NavigateTo("/home");
+        }
+        else
+        {
+            // User is not logged in → redirect to login
+            Nav.NavigateTo("/login");
+        }
+    }
+}

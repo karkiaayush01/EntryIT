@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace EntryIt.Entities;
+using System.ComponentModel.DataAnnotations;
 
-namespace EntryIt.Entities
+public class Journal
 {
-    internal class Journal
-    {
-    }
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public DateTime CreatedAt { get; set; }
+    public DateTime LastUpdatedAt { get; set; }
+    public string JournalContent { get; set; } = string.Empty;
+    public string CreatedBy { get; set; } = string.Empty;
 }

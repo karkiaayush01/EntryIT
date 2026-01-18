@@ -1,4 +1,5 @@
 ﻿using EntryIt.Services;
+using EntryIt.Data;
 using Microsoft.Extensions.Logging;
 using Blazor.Sonner.Extensions;
 
@@ -19,14 +20,23 @@ namespace EntryIt
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            // ✅ Register your AppDbContext for DI
+            builder.Services.AddDbContext<AppDbContext>();
+            builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Services.AddSonner();
             builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddSingleton<ILoggerService, LoggerService>();
+            builder.Services.AddSingleton<IAuthService, AuthService>();
     		builder.Logging.AddDebug();
 #endif
+            var app = builder.Build();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.EnsureCreated();
+            }
 
-            return builder.Build();
+            return app;
         }
     }
 }

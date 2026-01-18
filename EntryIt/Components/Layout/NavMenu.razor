@@ -74,22 +74,4 @@
     {
         showThemeSelector = false;
     }
-
-    private void ToggleTheme()
-    {
-        // Implement theme toggle logic here
-        // This could interact with a theme service or state management
-
-        string currentTheme = ThemeService.GetCurrentTheme();
-        Logger.LogInformation("Theme before: {Theme}", currentTheme);
-        if (currentTheme == "light")
-        {
-            ThemeService.SetCurrentTheme("dark");
-        }
-        else
-        {
-            ThemeService.SetCurrentTheme("light");
-        }
-
-    }
 }

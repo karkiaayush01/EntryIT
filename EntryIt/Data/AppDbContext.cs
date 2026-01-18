@@ -7,6 +7,7 @@ namespace EntryIt.Data;
 public class AppDbContext : DbContext
 {
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Journal> Journal { get; set; } = null!;
 
     private readonly string _dbPath;
 

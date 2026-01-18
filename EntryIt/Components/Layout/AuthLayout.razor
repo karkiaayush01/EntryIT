@@ -1,0 +1,46 @@
+﻿@inherits LayoutComponentBase
+@inject ThemeService ThemeService
+@using Blazor.Sonner
+@using Blazor.Sonner.Services
+@inject ToastService Toast
+@inject ToastService Toaster
+
+<div class="@($"page theme-{currentTheme} accent-{currentAccent}")">
+    <Toaster 
+        Position="@Blazor.Sonner.Common.ToastPosition.TopRight" 
+        RichColors="@true"
+        CloseButton="@true"
+    />
+
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    string currentTheme = string.Empty;
+    string currentAccent = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+
+        // Subscribe to theme changes
+        ThemeService.OnChange += UpdateTheme;
+    }
+
+    void UpdateTheme()
+    {
+        currentTheme = ThemeService.GetCurrentTheme();
+        currentAccent = ThemeService.GetCurrentAccent();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= UpdateTheme;
+    }
+}
