@@ -16,9 +16,9 @@ window.initQuill = (editorId) => {
 };
 
 window.getQuillHtml = () => {
-    return quill.root.innerHTMl;
+    return quill.root.innerHTML;
 };
 
 window.setQuillHtml = (html) => {
-    quill.root.innerHTMl = html;
+    quill.root.innerHTML = html;
 };

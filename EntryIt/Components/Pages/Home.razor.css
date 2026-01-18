@@ -111,6 +111,9 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     background: var(--bg);
     padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .journal-textarea {
@@ -178,6 +181,7 @@
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
+    align-self: flex-end;
 }
 
     .submit-btn:hover {

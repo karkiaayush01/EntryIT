@@ -1,7 +1,17 @@
 ﻿@inherits LayoutComponentBase
 @inject ThemeService ThemeService
+@using Blazor.Sonner
+@using Blazor.Sonner.Services
+@inject ToastService Toast
+@inject ToastService Toaster
 
 <div class="@($"page theme-{currentTheme} accent-{currentAccent}")">
+    <Toaster 
+        Position="@Blazor.Sonner.Common.ToastPosition.TopRight" 
+        RichColors="@true"
+        CloseButton="@true"
+    />
+
     <div class="sidebar">
         <NavMenu />
     </div>

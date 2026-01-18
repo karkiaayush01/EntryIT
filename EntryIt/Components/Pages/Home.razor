@@ -56,7 +56,11 @@
                         style="height:200px;"
                     >
                     </div>
+                    <button class="submit-btn" @onclick="Save" title="Submit">
+                        <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
+                    </button>
                 </div>
+                 
             </div>
         </div>
     </div>
@@ -66,8 +70,6 @@
     private string journalEntry = "";
     private string currentAccent = string.Empty;
     private string HtmlContent = "";
-
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -80,6 +82,7 @@
     private async Task Save()
     {
         HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+        LoggerService.LogInfo($"Html content {HtmlContent}");
     }
 
     private void SubmitJournal()

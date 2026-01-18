@@ -1,5 +1,6 @@
 ﻿using EntryIt.Services;
 using Microsoft.Extensions.Logging;
+using Blazor.Sonner.Extensions;
 
 namespace EntryIt
 {
@@ -19,6 +20,7 @@ namespace EntryIt
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddSonner();
             builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddSingleton<ILoggerService, LoggerService>();
     		builder.Logging.AddDebug();
