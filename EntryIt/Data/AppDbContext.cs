@@ -1,5 +1,4 @@
 ﻿using EntryIt.Entities;
-using EntryIt.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
 

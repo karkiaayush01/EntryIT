@@ -1,4 +1,4 @@
 ﻿public class LoginResponse
 {
-    public string UserId { get; set; } = string.Empty;
+    public UserViewModel User { get; set; } = new UserViewModel();
 }

@@ -63,11 +63,25 @@
 
     private async Task LoginUser()
     {
-        Toast.Info("Logging in...");
-        await AuthService.Login(email, password);
+        if(ValidationUtils.IsBlank([email, password]))
+        {
+            Toast.Error("Please fill all the fields");
+            return;
+        }
 
-        await Task.Delay(50);
-        Nav.NavigateTo("/home?from_login=true");
+        Toast.Info("Logging in...");
+        var loginResult = await AuthService.Login(email, password);
+
+        if(loginResult.Success)
+        {
+            Toast.Success("Login successful!");
+            await Task.Delay(500);
+            Nav.NavigateTo("/home", true, replace: true);
+        }
+        else
+        {
+            Toast.Error($"{loginResult.ErrorMessage ?? "Failed to Log in"}");
+        }
     }
 
     private void ToggleThemeSelector()
