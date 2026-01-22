@@ -2,6 +2,7 @@
 using EntryIt.Data;
 using Microsoft.EntityFrameworkCore;
 using EntryIt.Entities;
+namespace EntryIt.Services;
 
 public class AuthService : IAuthService
 {
@@ -20,7 +21,9 @@ public class AuthService : IAuthService
             Id = user.Id,
             FullName = user.FullName,
             Email = user.Email,
-            Username = user.Username
+            Username = user.Username,
+            CurrentStreak = user.CurrentStreak,
+            LongestStreak = user.LongestStreak
         };
     }
 
@@ -31,6 +34,15 @@ public class AuthService : IAuthService
             return null;
         }
         return CurrentUser;
+    }
+
+    public Guid GetCurrentUserId()
+    {
+        if (CurrentUser != null)
+        {
+            return CurrentUser.Id;
+        }
+        return Guid.Empty;
     }
 
     public async Task<ServiceResult<LoginResponse>> Login(string identifier, string password)

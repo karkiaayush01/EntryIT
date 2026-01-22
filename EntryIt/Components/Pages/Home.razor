@@ -1,6 +1,7 @@
 ﻿@page "/home"
 @inject ThemeService ThemeService
 @inject ILoggerService LoggerService
+@inject IAuthService AuthService
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject ToastService Toast
@@ -11,7 +12,7 @@
         <div class="header-actions">
             <div class="streak-counter">
                 <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
-                <span class="streak-number">16</span>
+                <span class="streak-number">@currentUser?.CurrentStreak</span>
             </div>
             <div class="user-avatar">AK</div>
         </div>
@@ -46,6 +47,7 @@
     private string journalEntry = "";
     private string currentAccent = string.Empty;
     private string HtmlContent = "";
+    private UserViewModel? currentUser = null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -79,6 +81,7 @@
 
     protected override void OnInitialized()
     {
+        currentUser = AuthService.GetCurrentUser();
         currentAccent = ThemeService.GetCurrentAccent();
         ThemeService.OnChange += HandleThemeChanged;
     }

@@ -6,7 +6,11 @@ namespace EntryIt.Data;
 public class AppDbContext : DbContext
 {
     public DbSet<User> Users { get; set; } = null!;
-    public DbSet<Journal> Journal { get; set; } = null!;
+    public DbSet<Journal> Journals { get; set; } = null!;
+    public DbSet<Mood> Moods { get; set; } = null!;
+    public DbSet<Streak> StreakRecords { get; set; } = null!;
+    public DbSet<Tag> Tags { get; set; } = null!;
+    public DbSet<Journal_Tag> Journal_Tags { get; set; } = null!;
 
     private readonly string _dbPath;
 
