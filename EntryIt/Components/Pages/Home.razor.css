@@ -184,13 +184,22 @@
     align-self: flex-end;
 }
 
-    .submit-btn:hover {
+    .submit-btn:not(:disabled):hover {
         transform: scale(1.05);
         box-shadow: 0 4px 12px rgba(78, 84, 200, 0.4);
     }
 
-    .submit-btn:active {
+    .submit-btn:not(:disabled):active {
         transform: scale(0.95);
+    }
+
+    /* Disabled state */
+    .submit-btn:disabled {
+        background: #9ca3af; /* grey */
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        opacity: 0.7;
     }
 
 .submit-icon {

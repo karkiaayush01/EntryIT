@@ -43,7 +43,7 @@
                         style="height:200px;"
                     >
                     </div>
-                    <button class="submit-btn" @onclick="() => SetIsSaveModelOpen(!IsSaveModalOpen)" title="Submit">
+                    <button class="submit-btn" @onclick="() => SetIsSaveModelOpen(!IsSaveModalOpen)" disabled="@IsSaveDisabled()" title="Submit">
                         <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
                     </button>
                 </div>
@@ -57,15 +57,19 @@
     private string journalEntry = "";
     private string currentAccent = string.Empty;
     private string HtmlContent = "";
+    private string TextContent = "";
     private bool IsSaveModalOpen = false;
     public List<Mood> Moods = [];
     private UserViewModel? currentUser = null;
+    private DotNetObjectReference<Home>? _objRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            _objRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("initQuill", "editor");
+            await JS.InvokeVoidAsync("quillInterop.registerOnChange", _objRef);
             var uri = new Uri(Nav.Uri);
             var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
             if (queryParams["from_login"] == "true")
@@ -75,10 +79,21 @@
         }
     }
 
-    private async Task Save()
+    [JSInvokable]
+    public async Task OnEditorChanged()
     {
         HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
-        LoggerService.LogInfo($"Html content {HtmlContent}");
+        TextContent = await JS.InvokeAsync<string>("getQuillText");
+
+        LoggerService.LogInfo($"Content changed: {HtmlContent}");
+        LoggerService.LogInfo($"Text Content changed: {TextContent}");
+        LoggerService.LogInfo($"Should be disabled: {string.IsNullOrWhiteSpace(TextContent)}");
+        StateHasChanged();
+    }
+
+    public bool IsSaveDisabled()
+    {
+        return string.IsNullOrWhiteSpace(TextContent);
     }
 
     public void SetIsSaveModelOpen(bool value)
@@ -119,6 +134,7 @@
 
     public void Dispose()
     {
+        _objRef?.Dispose();
         ThemeService.OnChange -= HandleThemeChanged;
     }
 }
