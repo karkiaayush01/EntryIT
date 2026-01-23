@@ -1,4 +1,6 @@
-﻿<div class="save-journal-overlay" @onclick="HandleOverlayClick">
+﻿@inject ToastService Toast
+
+<div class="save-journal-overlay" @onclick="HandleOverlayClick">
     <div class="save-container bg-dialog" @onclick:stopPropagation>
         <h2 class="text-primary">Save Journal</h2>
         <form @onsubmit="HandleSubmit" @onsubmit:preventDefault class="save-form">
@@ -52,29 +54,24 @@
                         @foreach (var tag in selectedTags)
                         {
                             <button type="button" class="tag-chip selected-tab" @onclick="() => RemoveTag(tag)">
-                                @tag
+                                @tag.Name
                                 <span class="tag-remove">×</span>
                             </button>
                         }
                     </div>
-                    <button type="button" class="add-new-tags bg-primary" @onclick="ToggleTagInput">
+                    <button type="button" class="add-new-tags bg-primary" @onclick="OpenTagSelector">
                         <span class="plus-icon">+</span>
                     </button>
                 </div>
-
-                @if (showTagInput)
-                {
-                    <div class="tag-input-container">
-                        <input type="text"
-                               placeholder="Enter tag name"
-                               @bind="newTag"
-                               @bind:event="oninput"
-                               @onkeyup="HandleTagKeyPress"
-                               class="tag-input" />
-                        <button type="button" class="btn-add-tag bg-primary" @onclick="AddTag">Add</button>
-                    </div>
-                }
             </div>
+
+            @if (showTagSelector)
+            {
+                <TagSelector Tags="Tags"
+                             SelectedTags="selectedTags"
+                             OnTagsSelected="HandleTagsSelected"
+                             OnClose="CloseTagSelector" />
+            }
 
             <div class="lock-section">
                 <div class="lock-switch">
@@ -89,18 +86,21 @@
                 {
                     <div class="form-field">
                         <label for="password" class="save-form-title">Journal Password</label>
-                        <input type="password"
-                               id="password"
-                               name="password"
-                               @bind="password"
-                               @bind:event="oninput"
-                               class="form-field-input"
-                               placeholder="Enter password" />
+                        <input 
+                            type="password"
+                            id="password"
+                            name="password"
+                            @bind="password"
+                            @bind:event="oninput"
+                            class="form-field-input"
+                            placeholder="@(sameAsUserPassword ? "": "Enter password")"
+                            disabled="@sameAsUserPassword"
+                        />
                         <div class="checkbox-field">
                             <input type="checkbox"
                                    id="sameAsUser"
                                    @bind="sameAsUserPassword" />
-                            <label for="sameAsUser">Same as user password</label>
+                            <label for="sameAsUser">Default journal password</label>
                         </div>
                     </div>
                 }
@@ -114,19 +114,33 @@
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
-    [Parameter] public EventCallback<JournalData> OnSave { get; set; }
+    [Parameter] public EventCallback<JournalDataFromModal> OnSave { get; set; }
     [Parameter] public List<Mood> Moods { get; set; } = [];
+    [Parameter] public List<Tag> Tags { get; set; } = [];
 
     private string title = string.Empty;
     private Mood? primaryMood = null;
     private Mood? secondaryMood1 = null;
     private Mood? secondaryMood2 = null;
-    private List<string> selectedTags = new() { "Work", "Career", "Fitness" };
+    private List<Tag> selectedTags = [];
+    private bool showTagSelector = false;
     private string newTag = string.Empty;
     private bool showTagInput = false;
     private bool isLocked = false;
-    private string password = string.Empty;
-    private bool sameAsUserPassword = false;
+    private string _password = string.Empty;
+    private bool sameAsUserPassword = true;
+
+    private string password
+    {
+        get => sameAsUserPassword ? "" : _password;
+        set
+        {
+            if (!sameAsUserPassword)
+            {
+                _password = value;
+            }
+        }
+    }
 
     protected override void OnParametersSet()
     {
@@ -137,43 +151,81 @@
         }
     }
 
-    private readonly List<MoodOption> primaryMoods = new()
-    {
-        new("😊", "Happy"),
-        new("😢", "Sad"),
-        new("😡", "Angry"),
-        new("😰", "Anxious"),
-        new("😌", "Calm"),
-        new("😴", "Tired")
-    };
-
-    private readonly List<MoodOption> secondaryMoods = new()
-    {
-        new("🎉", "Excited"),
-        new("😎", "Confident"),
-        new("🤔", "Thoughtful"),
-        new("😓", "Stressed"),
-        new("💪", "Motivated"),
-        new("🥰", "Grateful")
-    };
-
     private void HandleOverlayClick()
     {
         IsOpenChanged.InvokeAsync(false);
     }
 
+    private void ShowAlreadySelectedToast()
+    {
+        Toast.Error("This mood is already selected.");
+    }
+
+    private void OpenTagSelector()
+    {
+        showTagSelector = true;
+    }
+
+    private void CloseTagSelector()
+    {
+        showTagSelector = false;
+    }
+
+    private void HandleTagsSelected(List<Tag> tags)
+    {
+        selectedTags = tags;
+        showTagSelector = false;
+    }
+
+    private void RemoveTag(Tag tag)
+    {
+        selectedTags.Remove(tag);
+    }
+
+    private bool IsAlreadySelected(Mood? mood, string exclude)
+    {
+        if (mood is null) return false;
+
+        return (exclude != "primary" && mood.Id == primaryMood?.Id) ||
+               (exclude != "secondary1" && mood.Id == secondaryMood1?.Id) ||
+               (exclude != "secondary2" && mood.Id == secondaryMood2?.Id);
+    }
+
     private void SetMood(MoodSelect moodSelect)
     {
+        var type = moodSelect.Type.ToLower();
         switch (moodSelect.Type.ToLower())
         {
+            // Only allow selection if mood hasn't been selected by other moods
             case "primary":
-                primaryMood = moodSelect.Mood;
+                if(IsAlreadySelected(moodSelect.Mood, "primary"))
+                {
+                    ShowAlreadySelectedToast();
+                }
+                else
+                {    
+                    primaryMood = moodSelect.Mood;
+                }
                 break;
             case "secondary1":
-                secondaryMood1 = moodSelect.Mood;
+                if (IsAlreadySelected(moodSelect.Mood, "secondary1"))
+                {
+                    ShowAlreadySelectedToast();
+                }
+                else
+                {
+                    secondaryMood1 = moodSelect.Mood;
+                }
                 break;
             case "secondary2":
-                secondaryMood2 = moodSelect.Mood;
+                if (IsAlreadySelected(moodSelect.Mood, "secondary2"))
+                {
+                    ShowAlreadySelectedToast();
+                }
+                else
+                {
+                    secondaryMood2 = moodSelect.Mood;
+                }
                 break;
             default:
                 throw new ArgumentException($"Invalid mood type: {moodSelect.Type}. Must be 'primary', 'secondary1', or 'secondary2'.");
@@ -189,32 +241,9 @@
         }
     }
 
-    private void AddTag()
-    {
-        if (!string.IsNullOrWhiteSpace(newTag) && !selectedTags.Contains(newTag))
-        {
-            selectedTags.Add(newTag.Trim());
-            newTag = string.Empty;
-            showTagInput = false;
-        }
-    }
-
-    private void RemoveTag(string tag)
-    {
-        selectedTags.Remove(tag);
-    }
-
-    private void HandleTagKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            AddTag();
-        }
-    }
-
     private async Task HandleSubmit()
     {
-        var journalData = new JournalData
+        var journalData = new JournalDataFromModal
         {
             Title = title,
             PrimaryMood = primaryMood,
@@ -234,15 +263,4 @@
     }
 
     private record MoodOption(string Emoji, string Value);
-
-    public class JournalData
-    {
-        public string Title { get; set; } = string.Empty;
-        public Mood? PrimaryMood { get; set; } = null;
-        public List<Mood?> SecondaryMoods { get; set; } = [];
-        public List<string> Tags { get; set; } = new();
-        public bool IsLocked { get; set; }
-        public string? Password { get; set; }
-        public bool UseSamePassword { get; set; }
-    }
 }

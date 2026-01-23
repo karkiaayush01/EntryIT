@@ -8,10 +8,10 @@ namespace EntryIt.Services;
 public  class JournalService: IJournalService
 {
     private readonly AppDbContext _context;
-    private readonly AuthService _authService;
-    private readonly StreakService _streakService;
+    private readonly IAuthService _authService;
+    private readonly IStreakService _streakService;
 
-    public JournalService(AppDbContext context, AuthService authService, StreakService streakService)
+    public JournalService(AppDbContext context, IAuthService authService, IStreakService streakService)
     {
         _context = context;
         _authService = authService;
@@ -22,17 +22,25 @@ public  class JournalService: IJournalService
         string journalTitle,
         string content,
         int wordCount,
-        string primaryMood,
-        string secondaryMood1,
-        string secondaryMood2,
+        Guid primaryMood,
+        Guid secondaryMood1,
+        Guid secondaryMood2,
         bool lockJournal,
+        bool isDefaultPassword,
         string lockPassword,
-        Guid[] tags
+        List<Guid> tags
     )
     {
         try
         {
+            //Simulate API
+            await Task.Delay(2000);
             var user = _authService.GetCurrentUser();
+
+            if (isDefaultPassword && user != null)
+            {
+                lockPassword = (await _context.Users.FirstAsync(u => u.Id == user.Id)).JournalLockPassword;
+            }
 
             SaveResponse result = new SaveResponse();
 

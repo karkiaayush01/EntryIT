@@ -1,17 +1,22 @@
 ﻿using EntryIt.Common;
 using EntryIt.Data;
-using Microsoft.EntityFrameworkCore;
 using EntryIt.Entities;
+using Microsoft.EntityFrameworkCore;
 namespace EntryIt.Services;
 
 public class AuthService : IAuthService
 {
     public UserViewModel? CurrentUser { get; set; }
     private readonly AppDbContext _context;
+    private readonly ILoggerService _logger;
 
-    public AuthService(AppDbContext context)
+    public event Action? OnChange;
+
+    public AuthService(AppDbContext context, ILoggerService logger)
     {
         _context = context;
+        _logger = logger;
+
     }
 
     private UserViewModel MapUserViewModel(User user)
@@ -29,12 +34,55 @@ public class AuthService : IAuthService
 
     public UserViewModel? GetCurrentUser()
     {
+        _logger.LogInfo($"Getting current user: {CurrentUser}");
         if (CurrentUser == null)
         {
             return null;
         }
         return CurrentUser;
     }
+
+    public async Task RefreshUser()
+    {
+        _logger.LogInfo("RefreshUser called");
+
+        try
+        {
+            if (CurrentUser != null)
+            {
+                _logger.LogInfo($"Refreshing user data for UserId: {CurrentUser.Id}");
+
+                User updatedUser = await _context.Users.AsNoTracking().FirstAsync(u => u.Id == CurrentUser.Id);
+
+                _logger.LogInfo(
+                    $"User fetched from DB. CurrentStreak: {updatedUser.CurrentStreak}, " +
+                    $"LongestStreak: {updatedUser.LongestStreak}"
+                );
+
+                CurrentUser = MapUserViewModel(updatedUser);
+
+                _logger.LogInfo(
+                    $"CurrentUser updated in AuthService. " +
+                    $"CurrentStreak: {CurrentUser.CurrentStreak}, " +
+                    $"LongestStreak: {CurrentUser.LongestStreak}"
+                );
+
+                NotifyStateChanged();
+
+                _logger.LogInfo("AuthService state change notified");
+            }
+            else
+            {
+                _logger.LogError("RefreshUser failed: CurrentUser is null");
+                throw new Exception("Current user is null");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to refresh user data: {ex}");
+        }
+    }
+
 
     public Guid GetCurrentUserId()
     {
@@ -86,12 +134,13 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<ServiceResult<SignUpResponse>> SignUp(string fullName, string email, string username, string password)
+    public async Task<ServiceResult<SignUpResponse>> SignUp(string fullName, string email, string username, string password, string journalLockPassword)
     {
         await Task.Delay(2000); //Simulate API
         try
         {
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+            string hashedJournalPassword = BCrypt.Net.BCrypt.HashPassword(journalLockPassword);
 
             var existingUserByEmail = await _context.Users.
                 FirstOrDefaultAsync(
@@ -118,7 +167,8 @@ public class AuthService : IAuthService
                     FullName = fullName,
                     Email = email,
                     Username = username,
-                    Password = hashedPassword
+                    Password = hashedPassword,
+                    JournalLockPassword=hashedJournalPassword
                 };
 
                 _context.Users.Add(user);
@@ -150,4 +200,6 @@ public class AuthService : IAuthService
             return ServiceResult<object?>.FailureResult($"Error while logging user out {ex.Message}");
         }
     }
+
+    private void NotifyStateChanged() => OnChange?.Invoke();
 }

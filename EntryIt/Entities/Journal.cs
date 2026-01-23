@@ -9,9 +9,9 @@ public class Journal
     public string Content { get; set; } = string.Empty;
     public Guid CreatedBy { get; set; } = Guid.Empty;
     public int WordCount { get; set; } = 0;
-    public string PrimaryMood { get; set; } = string.Empty;
-    public string SecondaryMood1 { get; set; } = string.Empty;
-    public string SecondaryMood2 { get; set; } = string.Empty;
+    public Guid PrimaryMood { get; set; } = Guid.Empty;
+    public Guid SecondaryMood1 { get; set; } = Guid.Empty;
+    public Guid SecondaryMood2 { get; set; } = Guid.Empty;
     public bool IsLocked { get; set; } = false;
     public string Password {  get; set; } = string.Empty;
     public DateTime SaveDate { get; set; } = DateTime.Now.Date; //Local Device date for easy retrieval

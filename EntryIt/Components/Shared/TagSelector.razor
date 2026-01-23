@@ -1,0 +1,126 @@
+@inject ILoggerService LoggerService
+@using System.Text.Json
+
+<div class="tag-selector-overlay" @onclick="Close">
+    <div class="tag-selector-container bg-dialog" @onclick:stopPropagation>
+        <div class="tag-selector-header">
+            <h3>Select Tags</h3>
+            <button type="button" class="btn-close" @onclick="Close">×</button>
+        </div>
+        
+        <div class="tag-selector-content">
+            @foreach (var group in GetGroupedTags())
+            {
+                <div class="tag-group">
+                    <div class="tag-group-header">
+                        <span class="tag-group-icon">@GetGroupIcon(group.Key)</span>
+                        <h4 class="tag-group-title">@GetGroupTitle(group.Key)</h4>
+                        <span class="tag-group-count">@group.Value.Count</span>
+                    </div>
+                    
+                    <div class="tag-grid">
+                        @foreach (var tag in group.Value)
+                        {
+                            var isSelected = selectedTagIds.Contains(tag.Id);
+                            <button type="button"
+                                    class="tag-item @(isSelected ? "selected" : "")"
+                                    @onclick="() => ToggleTag(tag)">
+                                <span class="tag-name">@tag.Name</span>
+                                @if (isSelected)
+                                {
+                                    <span class="tag-check selected-tab">✓</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+            
+            @if (!Tags.Any())
+            {
+                <div class="empty-state">
+                    <span class="empty-icon">🏷️</span>
+                    <p>No tags available</p>
+                    <small>Tags will appear here once created</small>
+                </div>
+            }
+        </div>
+        
+        <div class="tag-selector-footer">
+            <div class="selected-count">
+                @selectedTagIds.Count selected
+            </div>
+            <div class="footer-actions">
+                <button type="button" class="btn-cancel" @onclick="Close">Cancel</button>
+                <button type="button" class="btn-confirm bg-primary" @onclick="ConfirmSelection">
+                    Add Tags
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public List<Tag> Tags { get; set; } = [];
+    [Parameter] public List<Tag> SelectedTags { get; set; } = [];
+    [Parameter] public EventCallback<List<Tag>> OnTagsSelected { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private HashSet<Guid> selectedTagIds = new();
+
+    private Dictionary<string, List<Tag>> GetGroupedTags()
+    {
+        return Tags
+            .GroupBy(t => t.Type)
+            .OrderBy(g => g.Key == "pre-defined" ? 0 : 1)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Name).ToList());
+    }
+    
+    private string GetGroupTitle(string type)
+    {
+        return type switch
+        {
+            "pre-defined" => "Pre-defined Tags",
+            "custom" => "Custom Tags",
+            _ => type
+        };
+    }
+    
+    private string GetGroupIcon(string type)
+    {
+        return type switch
+        {
+            "pre-defined" => "📌",
+            "custom" => "✨",
+            _ => "🏷️"
+        };
+    }
+    
+    private void ToggleTag(Tag tag)
+    {
+        if (selectedTagIds.Contains(tag.Id))
+        {
+            selectedTagIds.Remove(tag.Id);
+        }
+        else
+        {
+            selectedTagIds.Add(tag.Id);
+        }
+    }
+    
+    private async Task ConfirmSelection()
+    {
+        var selectedTags = Tags
+            .Where(t => selectedTagIds.Contains(t.Id))
+            .ToList();
+        
+        await OnTagsSelected.InvokeAsync(selectedTags);
+        await Close();
+    }
+    
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

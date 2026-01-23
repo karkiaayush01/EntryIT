@@ -59,6 +59,11 @@
                     <label for="confirmPassword">Confirm Password</label>
                     <input type="password" name="confirmPassword" id="confirmPassword" @bind="confirmPassword" />
                 </div>
+
+                <div class="form-field">
+                    <label for="journalPassword">Journal Lock Password</label>
+                    <input type="password" name="journalPassword" id="journalPassword" @bind="journalPassword" />
+                </div>
                 
                 <button type="submit" class="bg-accent login-btn">Sign Up</button>
             </form>
@@ -76,6 +81,7 @@
     private string username = string.Empty;
     private string password = string.Empty;
     private string confirmPassword = string.Empty;
+    private string journalPassword = string.Empty;
     private bool showThemeSelector = false;
     private bool isUsernameManuallyEdited = false;
 
@@ -133,7 +139,7 @@
 
         // Validate required fields
         if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(journalPassword))
         {
             Toast.Error("Please fill in all fields");
             return;
@@ -141,7 +147,7 @@
 
         Toast.Info("Creating account...");
         
-        var result = await AuthService.SignUp(fullName, email, username, password);
+        var result = await AuthService.SignUp(fullName, email, username, password, journalPassword);
         
         if (result.Success)
         {

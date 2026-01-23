@@ -1,6 +1,6 @@
-﻿@using Microsoft.Extensions.Logging
-@inject ThemeService ThemeService;
-@inject ILogger<NavMenu> Logger;
+﻿@inject ThemeService ThemeService;
+@inject ILoggerService LoggerService;
+@inject IAuthService AuthService;
 @using EntryIt.Components.Shared;
 
 <div class="nav-scrollable bg-accent" style="height: calc(100% - 20px); padding-top: 20px">
@@ -38,8 +38,8 @@
         </div>
 
         <div class="user-profile px-3">
-            <div class="user-avatar">AK</div>
-            <span class="user-name">Aayush Karki</span>
+            <div class="user-avatar">@CommonUtils.GetInitials(CurrentUser?.FullName ?? "")</div>
+            <span class="user-name">@(CurrentUser?.FullName ?? "")</span>
             <button class="theme-toggle" @onclick="ToggleThemeSelector" aria-label="Toggle theme">
                 <img 
                     class="theme-icon"
@@ -62,8 +62,14 @@
 
 @code {
     string ActiveTab { get; set; } = "home";
+    UserViewModel? CurrentUser { get; set; } = null;
 
     private bool showThemeSelector = false;
+
+    protected override void OnInitialized()
+    {
+        CurrentUser = AuthService.GetCurrentUser();
+    }
 
     private void ToggleThemeSelector()
     {

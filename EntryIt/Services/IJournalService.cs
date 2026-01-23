@@ -7,12 +7,13 @@ public interface IJournalService
         string journalTitle,
         string content, 
         int wordCount,
-        string primaryMood, 
-        string secondaryMood1,
-        string secondaryMood2,
+        Guid primaryMood, 
+        Guid secondaryMood1,
+        Guid secondaryMood2,
         bool lockJournal, 
+        bool isDefaultPassword,
         string lockPassword,
-        Guid[] tags
+        List<Guid> tags
     );
 
     public Task<ServiceResult<object?>> DeleteJournal();

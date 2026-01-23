@@ -2,7 +2,9 @@
 @inject ThemeService ThemeService
 @inject ILoggerService LoggerService
 @inject IAuthService AuthService
+@inject IJournalService JournalService
 @inject IMoodService MoodService
+@inject ITagService TagService
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject ToastService Toast
@@ -10,12 +12,11 @@
 <div class="home-container">
     @if (IsSaveModalOpen)
     {
-        <SaveJournalModal 
-            IsOpen="IsSaveModalOpen"
-            IsOpenChanged="SetIsSaveModelOpen" 
-            OnSave="() => SetIsSaveModelOpen(false)"
-            Moods="Moods"
-        />
+        <SaveJournalModal IsOpen="IsSaveModalOpen"
+                          IsOpenChanged="SetIsSaveModelOpen"
+                          OnSave="SubmitJournal"
+                          Moods="Moods"
+                          Tags="Tags" />
     }
     <div class="home-header">
         <h1 class="page-title">Home</h1>
@@ -24,7 +25,7 @@
                 <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
                 <span class="streak-number">@currentUser?.CurrentStreak</span>
             </div>
-            <div class="user-avatar">AK</div>
+            <div class="user-avatar">@CommonUtils.GetInitials(currentUser?.FullName ?? "")</div>
         </div>
     </div>
 
@@ -38,28 +39,27 @@
             <div class="journal-entry">
                 <h3 class="journal-title">Today's Journal</h3>
                 <div class="journal-input-wrapper">
-                    <div 
-                        id="editor"
-                        style="height:200px;"
-                    >
+                    <div id="editor"
+                         style="height:200px;">
                     </div>
                     <button class="submit-btn" @onclick="() => SetIsSaveModelOpen(!IsSaveModalOpen)" disabled="@IsSaveDisabled()" title="Submit">
                         <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
                     </button>
                 </div>
-                 
+
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private string journalEntry = "";
     private string currentAccent = string.Empty;
     private string HtmlContent = "";
     private string TextContent = "";
+    private int WordCount = 0;
     private bool IsSaveModalOpen = false;
     public List<Mood> Moods = [];
+    public List<Tag> Tags = [];
     private UserViewModel? currentUser = null;
     private DotNetObjectReference<Home>? _objRef;
 
@@ -82,13 +82,16 @@
     [JSInvokable]
     public async Task OnEditorChanged()
     {
-        HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
-        TextContent = await JS.InvokeAsync<string>("getQuillText");
-
-        LoggerService.LogInfo($"Content changed: {HtmlContent}");
-        LoggerService.LogInfo($"Text Content changed: {TextContent}");
-        LoggerService.LogInfo($"Should be disabled: {string.IsNullOrWhiteSpace(TextContent)}");
-        StateHasChanged();
+        try
+        {
+            HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+            TextContent = (await JS.InvokeAsync<string>("getQuillText")).Trim();
+            StateHasChanged();
+        }
+        catch (JSException ex)
+        {
+            LoggerService.LogError($"Quill JS error: {ex.Message}");
+        }
     }
 
     public bool IsSaveDisabled()
@@ -99,16 +102,41 @@
     public void SetIsSaveModelOpen(bool value)
     {
         IsSaveModalOpen = value;
-        LoggerService.LogInfo($"Save model state: ${IsSaveModalOpen}");
+        LoggerService.LogInfo($"Save model state: {IsSaveModalOpen}");
     }
 
-    private void SubmitJournal()
+    private async Task SubmitJournal(JournalDataFromModal journalData)
     {
-        if (!string.IsNullOrWhiteSpace(journalEntry))
+        Toast.Info("Saving Journal...");
+
+        WordCount = CommonUtils.GetWordCount(TextContent);
+        List<Tag> tags = journalData.Tags;
+        List<Guid> tagIDs = tags.Select(t => t.Id).ToList();
+        var secondary1 = journalData.SecondaryMoods.ElementAtOrDefault(0)?.Id ?? Guid.Empty;
+        var secondary2 = journalData.SecondaryMoods.ElementAtOrDefault(1)?.Id ?? Guid.Empty;
+
+
+        ServiceResult<SaveResponse> saveResponse = await JournalService.SaveJournal(
+            journalData.Title,
+            HtmlContent,
+            WordCount,
+            journalData.PrimaryMood?.Id ?? Guid.Empty,
+            secondary1,
+            secondary2,
+            journalData.IsLocked,
+            journalData.UseSamePassword,
+            journalData.Password ?? "",
+            tagIDs
+        );
+
+        if (saveResponse.Success)
         {
-            // Submit journal entry logic
-            // Clear after submission
-            journalEntry = "";
+            Toast.Success("Successfully saved journal");
+            await AuthService.RefreshUser();
+        }
+        else
+        {
+            Toast.Error(saveResponse.ErrorMessage ?? "Failed to save journal");
         }
     }
 
@@ -122,8 +150,15 @@
             Moods = moodResult.Data ?? [];
         }
 
+        var tagsResult = await TagService.GetTags();
+        if (tagsResult.Success)
+        {
+            Tags = tagsResult.Data ?? [];
+        }
+
         currentAccent = ThemeService.GetCurrentAccent();
         ThemeService.OnChange += HandleThemeChanged;
+        AuthService.OnChange += HandleAuthServiceChanged;
     }
 
     private void HandleThemeChanged()
@@ -132,9 +167,17 @@
         StateHasChanged();
     }
 
+    private void HandleAuthServiceChanged()
+    {
+        LoggerService.LogInfo("Auth service updated. Setting new user");
+        currentUser = AuthService.GetCurrentUser();
+        StateHasChanged();
+    }
+
     public void Dispose()
     {
         _objRef?.Dispose();
         ThemeService.OnChange -= HandleThemeChanged;
+        AuthService.OnChange -= HandleAuthServiceChanged;
     }
 }
