@@ -1,0 +1,116 @@
+﻿<div class="mood-select-wrapper">
+    <div class="mood-select @(isOpen ? "open" : "")" @onclick="ToggleDropdown">
+        <div class="mood-select-trigger bg-theme">
+            @if (selectedMood != null)
+            {
+                <span class="sele cted-emoji">@selectedMood.Emoji</span>
+                <span class="selected-name">@selectedMood.Name</span>
+            }
+            else
+            {
+                <span class="placeholder">Select a mood...</span>
+            }
+            <span class="chevron">▼</span>
+        </div>
+
+        @if (isOpen)
+        {
+            <div class="mood-dropdown bg-theme" @onclick:stopPropagation>
+                @foreach (var category in GetGroupedMoods())
+                {
+                    <div class="category-group bg-dialog">
+                        <div class="category-header" @onclick="() => ToggleCategory(category.Key)">
+                            <span class="category-label">@category.Key</span>
+                            <span class="category-chevron @(expandedCategories.Contains(category.Key) ? "expanded" : "")">›</span>
+                        </div>
+
+                        @if (expandedCategories.Contains(category.Key))
+                        {
+                            <div class="category-items">
+                                @foreach (var mood in category.Value)
+                                {
+                                    <div class="mood-option bg-dialog @(selectedMood?.Id == mood.Id ? "selected" : "")"
+                                         @onclick="() => SelectMood(mood)">
+                                        <span class="option-emoji">@mood.Emoji</span>
+                                        <span class="option-name">@mood.Name</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Mood> Moods { get; set; } = [];
+    [Parameter] public string MoodType { get; set; } = string.Empty;
+    [Parameter] public EventCallback<MoodSelect> OnMoodSelected { get; set; }
+    [Parameter] public Mood? SelectedMood { get; set; }
+
+    private bool isOpen = false;
+    private Mood? selectedMood = null;
+    private HashSet<string> expandedCategories = new();
+
+    protected override void OnParametersSet()
+    {
+        selectedMood = SelectedMood;
+
+        // Auto-expand first category
+        if (!expandedCategories.Any() && Moods.Any())
+        {
+            var firstCategory = GetGroupedMoods().FirstOrDefault().Key;
+            if (firstCategory != null)
+            {
+                expandedCategories.Add(firstCategory);
+            }
+        }
+    }
+
+    private Dictionary<string, List<Mood>> GetGroupedMoods()
+    {
+        return Moods
+            .GroupBy(m => m.Category)
+            .OrderBy(g => GetCategoryOrder(g.Key))
+            .ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    private int GetCategoryOrder(string category)
+    {
+        return category switch
+        {
+            "Positive" => 1,
+            "Neutral" => 2,
+            "Negative" => 3,
+            _ => 4
+        };
+    }
+
+    private void ToggleDropdown()
+    {
+        isOpen = !isOpen;
+    }
+
+    private void ToggleCategory(string category)
+    {
+        if (expandedCategories.Contains(category))
+        {
+            expandedCategories.Remove(category);
+        }
+        else
+        {
+            expandedCategories.Add(category);
+        }
+    }
+
+    private async Task SelectMood(Mood mood)
+    {
+        selectedMood = mood;
+        isOpen = false;
+
+        MoodSelect moodSelect = new MoodSelect { Mood = mood, Type = MoodType };
+        await OnMoodSelected.InvokeAsync(moodSelect);
+    }
+}

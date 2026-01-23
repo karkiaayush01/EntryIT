@@ -2,11 +2,21 @@
 @inject ThemeService ThemeService
 @inject ILoggerService LoggerService
 @inject IAuthService AuthService
+@inject IMoodService MoodService
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject ToastService Toast
 
 <div class="home-container">
+    @if (IsSaveModalOpen)
+    {
+        <SaveJournalModal 
+            IsOpen="IsSaveModalOpen"
+            IsOpenChanged="SetIsSaveModelOpen" 
+            OnSave="() => SetIsSaveModelOpen(false)"
+            Moods="Moods"
+        />
+    }
     <div class="home-header">
         <h1 class="page-title">Home</h1>
         <div class="header-actions">
@@ -33,7 +43,7 @@
                         style="height:200px;"
                     >
                     </div>
-                    <button class="submit-btn" @onclick="Save" title="Submit">
+                    <button class="submit-btn" @onclick="() => SetIsSaveModelOpen(!IsSaveModalOpen)" title="Submit">
                         <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
                     </button>
                 </div>
@@ -47,6 +57,8 @@
     private string journalEntry = "";
     private string currentAccent = string.Empty;
     private string HtmlContent = "";
+    private bool IsSaveModalOpen = false;
+    public List<Mood> Moods = [];
     private UserViewModel? currentUser = null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -69,6 +81,12 @@
         LoggerService.LogInfo($"Html content {HtmlContent}");
     }
 
+    public void SetIsSaveModelOpen(bool value)
+    {
+        IsSaveModalOpen = value;
+        LoggerService.LogInfo($"Save model state: ${IsSaveModalOpen}");
+    }
+
     private void SubmitJournal()
     {
         if (!string.IsNullOrWhiteSpace(journalEntry))
@@ -79,9 +97,16 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected async override Task OnInitializedAsync()
     {
         currentUser = AuthService.GetCurrentUser();
+
+        var moodResult = await MoodService.GetMoods();
+        if (moodResult.Success)
+        {
+            Moods = moodResult.Data ?? [];
+        }
+
         currentAccent = ThemeService.GetCurrentAccent();
         ThemeService.OnChange += HandleThemeChanged;
     }

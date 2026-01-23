@@ -3,12 +3,14 @@
     --bg: white;
     --text: black;
     --primary: #4E54C8;
+    --primary-rgb: 78, 84, 200;
     --selected-tab: #3326BE;
     --gradient_bg: linear-gradient(29.864deg, #4E54C8 38%, #8F94FB 75%);
     --radial-gradient-bg: radial-gradient( circle, #4E54C8 0%, #8F94FB 68% );
     --hovered-tab: #1E4B9B;
     --hover-bg: #F0F0F0;
     --theme-selector-active-bg: rgba(78, 84, 200, 0.7);
+    --dialog: #FFFFFF;
 }
 
 html, body, .page {
@@ -74,17 +76,20 @@ html, body, .page {
     --bg: #FFFFFF;
     --text: #000000;
     --hover-bg: #F0F0F0;
+    --dialog: #FFFFFF;
 }
 
 .theme-dark {
     --bg: #2F2E2E;
     --text: #FFFFFF;
     --hover-bg: #444444;
+    --dialog: #2F2E2E;
 }
 
 /* Accent Data */
 .accent-default {
     --primary: #4E54C8;
+    --primary-rgb: 78, 84, 200;
     --gradient_bg: linear-gradient(29.864deg, #4E54C8 38%, #8F94FB 75%);
     --radial-gradient-bg: radial-gradient( circle, #4E54C8 0%, #8F94FB 68% );
     --selected-tab: #034596;
@@ -94,6 +99,7 @@ html, body, .page {
 
 .accent-peach {
     --primary: #FF7E5F;
+    --primary-rgb: 255, 126, 95;
     --gradient_bg: linear-gradient(29.864deg, #FF7E5F 47%, #FFDAB9 87%);
     --radial-gradient-bg: radial-gradient( circle, #FF7E5F 20%, #FFDAB9 100% );
     --selected-tab: #FB6743;
@@ -103,6 +109,7 @@ html, body, .page {
 
 .accent-ocean {
     --primary: #0072FF;
+    --primary-rgb: 0, 114, 255;
     --gradient_bg: linear-gradient(29.864deg, #00C6FF 38%, #0072FF 75%);
     --radial-gradient-bg: radial-gradient( circle, #00C6FF 18%, #0072FF 83% );
     --selected-tab: #034596;
@@ -112,6 +119,7 @@ html, body, .page {
 
 .accent-sunset {
     --primary: #FF5F6D;
+    --primary-rgb: 255, 95, 109;
     --gradient_bg: linear-gradient(29.864deg, #FF5F6D 18%, #FFC371 75%);
     --radial-gradient-bg: radial-gradient( circle, #FF5F6D 18%, #FFC371 100% );
     --selected-tab: #EC3747;
@@ -124,6 +132,10 @@ html, body, .page {
     color: var(--primary);
 }
 
+.text-theme {
+    color: var(--text);
+}
+
 bg-theme {
     background: var(--bg);
 }
@@ -132,8 +144,16 @@ bg-theme {
     background: var(--gradient_bg);
 }
 
+.bg-primary {
+    background: var(--primary);
+}
+
 .bg-accent-radial {
     background: var(--radial-gradient-bg);
+}
+
+.bg-dialog {
+    background: var(--dialog);
 }
 
 .selected-tab {

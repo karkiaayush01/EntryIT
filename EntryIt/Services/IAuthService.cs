@@ -1,4 +1,5 @@
 ﻿using EntryIt.Common;
+using EntryIt.Entities;
 
 public interface IAuthService
 {

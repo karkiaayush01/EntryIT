@@ -1,0 +1,242 @@
+.mood-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.mood-select {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.mood-select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.2s;
+    min-height: 24px;
+}
+
+.mood-select.open .mood-select-trigger {
+    border-color: var(--primary-color, #ff6b6b);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.mood-select-trigger:hover {
+    border-color: #bbb;
+}
+
+.selected-emoji {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.selected-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.placeholder {
+    flex: 1;
+    font-size: 14px;
+    color: #999;
+}
+
+.chevron {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s;
+}
+
+.mood-select.open .chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.mood-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Category Group */
+.category-group {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .category-group:last-child {
+        border-bottom: none;
+    }
+
+.category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .category-header:hover {
+        background: #f0f0f0;
+    }
+
+    .theme-dark .category-header:hover {
+        background: #3A3A3A
+    }
+
+.category-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-chevron {
+    font-size: 16px;
+    color: #999;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+    .category-chevron.expanded {
+        transform: rotate(90deg);
+    }
+
+/* Category Items */
+.category-items {
+    background: white;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+.mood-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px 10px 32px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+    .mood-option:hover {
+        background: #f9f9f9;
+    }
+
+    /* Dark theme override */
+    .theme-dark .mood-option:hover {
+        background: #3A3A3A;
+    }
+
+    .mood-option.selected {
+        background: rgba(var(--primary-rgb), 0.2);
+    }
+
+    .mood-option.selected:hover {
+        background: rgba(var(--primary-rgb), 0.2);
+    }
+
+.option-emoji {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.option-name {
+    font-size: 14px;
+}
+
+.mood-option.selected .option-name {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Scrollbar */
+.mood-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mood-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mood-dropdown::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+}
+
+    .mood-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+
+/* Category-specific colors */
+.category-group:nth-child(1) .category-label {
+    color: #10b981;
+}
+
+.category-group:nth-child(2) .category-label {
+    color: #6b7280;
+}
+
+.category-group:nth-child(3) .category-label {
+    color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .mood-dropdown {
+        max-height: 280px;
+    }
+
+    .mood-select-trigger {
+        padding: 10px 14px;
+    }
+
+    .category-header {
+        padding: 10px 14px;
+    }
+
+    .mood-option {
+        padding: 8px 14px 8px 28px;
+    }
+}
+
+/* Focus styles */
+.mood-select:focus-within .mood-select-trigger {
+    outline: 2px solid var(--primary-color, #ff6b6b);
+    outline-offset: 2px;
+}

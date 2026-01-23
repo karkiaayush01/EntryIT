@@ -27,6 +27,7 @@ namespace EntryIt
             builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddSingleton<ILoggerService, LoggerService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IMoodService, MoodService>();
     		builder.Logging.AddDebug();
 #endif
             var app = builder.Build();
