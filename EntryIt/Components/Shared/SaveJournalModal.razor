@@ -117,6 +117,7 @@
     [Parameter] public EventCallback<JournalDataFromModal> OnSave { get; set; }
     [Parameter] public List<Mood> Moods { get; set; } = [];
     [Parameter] public List<Tag> Tags { get; set; } = [];
+    [Parameter] public JournalViewModel? TodayJournal { get; set; } = null;
 
     private string title = string.Empty;
     private Mood? primaryMood = null;
@@ -144,10 +145,22 @@
 
     protected override void OnParametersSet()
     {
-        // Setting primaryMood to first mood if available and not already set
-        if (Moods.Any() && primaryMood == null)
+        if (TodayJournal != null)
         {
-            primaryMood = Moods.First();
+            title = TodayJournal.Title;
+            primaryMood = Moods.FirstOrDefault(m => m.Id == TodayJournal.PrimaryMood);
+            secondaryMood1 = Moods.FirstOrDefault(m => m.Id == TodayJournal.SecondaryMood1);
+            secondaryMood2 = Moods.FirstOrDefault(m => m.Id == TodayJournal.SecondaryMood2);
+            selectedTags = TodayJournal.SelectedTags;
+            isLocked = TodayJournal.IsLocked;
+        }
+        else
+        {
+            // Setting primaryMood to first mood if available and not already set
+            if (Moods.Any() && primaryMood == null)
+            {
+                primaryMood = Moods.First();
+            }
         }
     }
 

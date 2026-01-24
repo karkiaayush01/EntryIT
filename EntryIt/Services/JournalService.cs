@@ -3,6 +3,8 @@ using EntryIt.Data;
 using EntryIt.Entities;
 using Microsoft.EntityFrameworkCore;
 using EntryIt.Utils;
+using EntryIt.Models;
+using System.Threading.Tasks;
 namespace EntryIt.Services;
 
 public  class JournalService: IJournalService
@@ -10,12 +12,32 @@ public  class JournalService: IJournalService
     private readonly AppDbContext _context;
     private readonly IAuthService _authService;
     private readonly IStreakService _streakService;
+    private readonly ILoggerService _loggerService;
 
-    public JournalService(AppDbContext context, IAuthService authService, IStreakService streakService)
+    public JournalService(AppDbContext context, IAuthService authService, IStreakService streakService, ILoggerService loggerService)
     {
         _context = context;
         _authService = authService;
         _streakService = streakService;
+        _loggerService = loggerService;
+    }
+
+    private JournalViewModel MapJournalToViewModel(Journal journal, List<Tag> journalTags)
+    {
+        return new JournalViewModel
+        {
+            Id = journal.Id,
+            Title = journal.Title,
+            Content = journal.Content,
+            WordCount = journal.WordCount,
+            PrimaryMood = journal.PrimaryMood,
+            SecondaryMood1 = journal.SecondaryMood1,
+            SecondaryMood2  = journal.SecondaryMood2,
+            IsLocked = journal.IsLocked,
+            SaveDate = journal.SaveDate,
+            LastUpdatedAt = journal.LastUpdatedAt,
+            SelectedTags = journalTags
+        };
     }
 
     public async Task<ServiceResult<SaveResponse>> SaveJournal(
@@ -35,6 +57,7 @@ public  class JournalService: IJournalService
         {
             //Simulate API
             await Task.Delay(2000);
+            _loggerService.LogInfo($"Received tags: {string.Join(",", tags)}");
             var user = _authService.GetCurrentUser();
 
             if (isDefaultPassword && user != null)
@@ -122,6 +145,36 @@ public  class JournalService: IJournalService
                 existingJournal.Password = lockPassword;
                 existingJournal.LastUpdatedAt = DateTime.UtcNow;
 
+                // Update the tags by removing the tags that user removed and new tags user added
+                var currentTagIds = await _context.Journal_Tags
+                .Where(jt => jt.JournalId == existingJournal.Id)
+                .Select(jt => jt.TagId)
+                .ToListAsync();
+
+
+                var tagsToRemove = currentTagIds.Except(tags).ToList();
+                if (tagsToRemove.Any())
+                {
+                    var jtToRemove = await _context.Journal_Tags
+                    .Where(jt => jt.JournalId == existingJournal.Id && tagsToRemove.Contains(jt.TagId))
+                    .ToListAsync();
+
+
+                    _context.Journal_Tags.RemoveRange(jtToRemove);
+                }
+
+                var tagsToAdd = tags.Except(currentTagIds).ToList();
+                foreach (var tagId in tagsToAdd)
+                {
+                    _context.Journal_Tags.Add(new Journal_Tag
+                    {
+                        JournalId = existingJournal.Id,
+                        TagId = tagId
+                    });
+                }
+
+
+                // Save changes
                 await _context.SaveChangesAsync();
 
                 result = new SaveResponse
@@ -137,7 +190,7 @@ public  class JournalService: IJournalService
         }
         catch (Exception ex)
         {
-            return ServiceResult<SaveResponse>.FailureResult($"An error occurred while saving journal {ex.Message}");
+            return ServiceResult<SaveResponse>.FailureResult($"An error occurred while saving journal: {ex.Message}");
         }
     }
 
@@ -186,4 +239,125 @@ public  class JournalService: IJournalService
             return ServiceResult<object?>.FailureResult($"Failed to delete Journal: {ex.Message}");
         }
     }
+
+    private async Task<List<Tag>> GetJournalTags(Guid JournalId)
+    {
+        try
+        {
+            List<Tag> tags = await (
+                from t in _context.Tags
+                join jt in _context.Journal_Tags on t.Id equals jt.TagId
+                where jt.JournalId == JournalId
+                select t
+            ).ToListAsync();
+
+            return tags;
+        } 
+        catch (Exception ex)
+        {
+            _loggerService.LogError($"Failed to get journal Tags: {ex.Message}");
+            return [];
+        }
+    }
+
+    public async Task<ServiceResult<JournalViewModel>> GetJournal(bool today, Guid userId, Guid journalId = default)
+    {
+        try
+        {
+            // Throw if no user id
+            if(userId == Guid.Empty) { throw new ArgumentNullException("Missing userId. Please authenticate first."); }
+
+            // Check if its the authenticated user
+            if(userId != _authService.GetCurrentUser()?.Id) { throw new Exception("You are not authorized to get this journal"); }
+
+            if(!today && journalId == Guid.Empty)
+            {
+                throw new ArgumentNullException("Journal Id is needed for journals not today");
+            }
+
+            JournalViewModel mappedResult = new JournalViewModel{};
+            Journal? journal = new Journal();
+            
+            if(today)
+            {
+                // Get today's journal
+                DateTime todayDate = DateTimeUtils.GetTodayLocalDate();
+                journal = await _context.Journals
+                    .Where(j => j.SaveDate == todayDate && j.CreatedBy == userId)
+                    .FirstOrDefaultAsync();
+
+                if (journal == null)
+                {
+                    throw new Exception("Could not find any journal for today");
+                }
+            }
+            else
+            {
+                // Get specified journal from journal Id
+                journal = await _context.Journals
+                    .Where(j => j.Id == journalId && j.CreatedBy == userId)
+                    .FirstOrDefaultAsync();
+
+                if (journal == null)
+                {
+                    throw new Exception("Could not find the specific journal. Perhaps it belongs to different user.");
+                }
+            }
+
+            List<Tag> journalTags = await GetJournalTags(journal.Id);
+            mappedResult = MapJournalToViewModel(journal, journalTags);
+            return ServiceResult<JournalViewModel>.SuccessResult(mappedResult);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<JournalViewModel>.FailureResult($"Failed to retrieve journal {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Delete today's journal
+    /// </summary>
+    /// <param name="userId">User who requested to delete their journal</param>
+    /// <param name="journalId">Journal Id to be deleted</param>
+    /// <returns>Success or Failure based on delete operation</returns>
+    /// <exception cref="ArgumentNullException">Missing userId or JournalId</exception>
+    public async Task<ServiceResult<object?>> DeleteJournal(Guid userId, Guid journalId)
+    {
+        try
+        {
+            // Argument validations
+            if(userId == Guid.Empty || journalId == Guid.Empty)
+            {
+                throw new ArgumentNullException($"Missing user id or journal id");
+            }
+
+            DateTime today = DateTimeUtils.GetTodayLocalDate();
+
+            Journal? journal = await _context.Journals
+                .Where(j => j.CreatedBy == userId && j.Id == journalId)
+                .FirstOrDefaultAsync();
+
+            if (journal == null)
+            {
+                throw new Exception($"Could not find journal");
+            }
+            else if (journal.SaveDate != today)
+            {
+                throw new Exception("Cannot delete journal that was not created today");
+            }
+            else
+            {
+                // Delete the journal
+                _context.Journals.Remove(journal);
+                await _context.SaveChangesAsync();
+
+                return ServiceResult<object?>.SuccessResult(null);
+            }
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<object?>.FailureResult($"An error occurred while deleting journal: {ex.Message}");
+        }
+    }
 }
+

@@ -1,9 +1,10 @@
 ﻿using EntryIt.Common;
+using EntryIt.Models;
 namespace EntryIt.Services;
 
 public interface IJournalService
 {
-    public Task<ServiceResult<SaveResponse>> SaveJournal(
+    Task<ServiceResult<SaveResponse>> SaveJournal(
         string journalTitle,
         string content, 
         int wordCount,
@@ -16,5 +17,7 @@ public interface IJournalService
         List<Guid> tags
     );
 
-    public Task<ServiceResult<object?>> DeleteJournal();
+    Task<ServiceResult<JournalViewModel>> GetJournal(bool today, Guid userId, Guid journalId);
+
+    Task<ServiceResult<object?>> DeleteJournal(Guid userId, Guid journalId);
 }

@@ -1,4 +1,4 @@
-let quill;
+﻿let quill;
 
 window.initQuill = (editorId) => {
     quill = new Quill(`#${editorId}`, {
@@ -32,8 +32,18 @@ window.getQuillHtml = () => {
     return quill.root.innerHTML;
 };
 
+// try setting quill html until complete
 window.setQuillHtml = (html) => {
-    quill.root.innerHTML = html;
+    const trySet = () => {
+        if (quill && quill.root) {
+            quill.root.innerHTML = html ?? "";
+        } else {
+            // Quill not ready yet → retry
+            setTimeout(trySet, 50);
+        }
+    };
+
+    trySet();
 };
 
 window.getQuillText = () => {

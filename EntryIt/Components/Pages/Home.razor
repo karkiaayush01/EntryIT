@@ -12,11 +12,14 @@
 <div class="home-container">
     @if (IsSaveModalOpen)
     {
-        <SaveJournalModal IsOpen="IsSaveModalOpen"
-                          IsOpenChanged="SetIsSaveModelOpen"
-                          OnSave="SubmitJournal"
-                          Moods="Moods"
-                          Tags="Tags" />
+        <SaveJournalModal 
+            IsOpen="IsSaveModalOpen"
+            IsOpenChanged="SetIsSaveModelOpen"
+            OnSave="SubmitJournal"
+            Moods="Moods"
+            Tags="Tags" 
+            TodayJournal="todaysJournal"
+        />
     }
     <div class="home-header">
         <h1 class="page-title">Home</h1>
@@ -37,7 +40,33 @@
             </div>
 
             <div class="journal-entry">
-                <h3 class="journal-title">Today's Journal</h3>
+                <div class="journal-header">
+                    <h3 class="journal-title">Today's Journal</h3>
+                    
+                    @if(todaysJournal != null)
+                    {
+                        <div class="today-mood">
+                            @($"Primary Mood: {primaryMoodToday?.Emoji}")
+                        </div>
+
+                        if(secondaryMood1Today != null || secondaryMood2Today != null)
+                        {
+                            <div class="today-mood">
+                                @($"Secondary Moods: " +
+                                    (
+                                        secondaryMood1Today != null && secondaryMood2Today != null
+                                        ? $"{secondaryMood1Today.Emoji},{secondaryMood2Today.Emoji}"
+                                        : secondaryMood1Today != null
+                                        ? $"{secondaryMood1Today.Emoji}"
+                                        : secondaryMood2Today != null
+                                        ? $"{secondaryMood2Today.Emoji}"
+                                        : ""
+                                    )
+                                )
+                            </div>
+                        }
+                    }
+                </div>
                 <div class="journal-input-wrapper">
                     <div id="editor"
                          style="height:200px;">
@@ -61,6 +90,10 @@
     public List<Mood> Moods = [];
     public List<Tag> Tags = [];
     private UserViewModel? currentUser = null;
+    private JournalViewModel? todaysJournal = null;
+    private Mood? primaryMoodToday;
+    private Mood? secondaryMood1Today;
+    private Mood? secondaryMood2Today;
     private DotNetObjectReference<Home>? _objRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -70,12 +103,15 @@
             _objRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("initQuill", "editor");
             await JS.InvokeVoidAsync("quillInterop.registerOnChange", _objRef);
-            var uri = new Uri(Nav.Uri);
-            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            if (queryParams["from_login"] == "true")
+
+            // Set today's journal content
+            if(todaysJournal != null)
             {
-                Toast.Success("Login successful!");
+                LoggerService.LogInfo("Updating editor with today's content");
+                await JS.InvokeVoidAsync("setQuillHtml", todaysJournal.Content);
             }
+
+            var uri = new Uri(Nav.Uri);
         }
     }
 
@@ -85,6 +121,7 @@
         try
         {
             HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+            LoggerService.LogInfo($"Editor changed, new content: {HtmlContent}");
             TextContent = (await JS.InvokeAsync<string>("getQuillText")).Trim();
             StateHasChanged();
         }
@@ -96,7 +133,7 @@
 
     public bool IsSaveDisabled()
     {
-        return string.IsNullOrWhiteSpace(TextContent);
+        return (HtmlContent == todaysJournal?.Content) || string.IsNullOrWhiteSpace(TextContent);
     }
 
     public void SetIsSaveModelOpen(bool value)
@@ -154,6 +191,20 @@
         if (tagsResult.Success)
         {
             Tags = tagsResult.Data ?? [];
+        }
+
+        LoggerService.LogInfo("Getting today's journal");
+        Guid userId = currentUser?.Id ?? Guid.Empty;
+        var todaysJournalFetch = await JournalService.GetJournal(true, userId, Guid.Empty);
+        if (todaysJournalFetch.Success)
+        {
+            LoggerService.LogInfo("Successfully received today's journal");
+            todaysJournal = todaysJournalFetch.Data;
+            LoggerService.LogInfo($"Content: {todaysJournal?.Content}");
+
+            primaryMoodToday = Moods.FirstOrDefault(m => m.Id == todaysJournal?.PrimaryMood);
+            secondaryMood1Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood1);
+            secondaryMood2Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood2);
         }
 
         currentAccent = ThemeService.GetCurrentAccent();
