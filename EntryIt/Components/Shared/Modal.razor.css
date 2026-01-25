@@ -1,0 +1,130 @@
+/* Modal.razor.css */
+/* Styles for the reusable Modal component */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-container {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.2s ease;
+}
+
+.theme-dark .modal-container {
+    background: #1a1a1a;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.theme-dark .modal-header {
+    border-bottom-color: #2b2b2b;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.theme-dark .modal-title {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-message {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.theme-dark .modal-message {
+    color: #ccc;
+}
+
+.modal-extra-text {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 12px;
+}
+
+.extra-text-success {
+    background: #f0f9ff;
+    color: #0369a1;
+}
+
+.theme-dark .extra-text-success {
+    background: rgba(3, 105, 161, 0.15);
+    color: #7dd3fc;
+}
+
+.extra-text-warning {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.theme-dark .extra-text-warning {
+    background: rgba(180, 83, 9, 0.15);
+    color: #fcd34d;
+}
+
+.extra-text-danger {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.theme-dark .extra-text-danger {
+    background: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.theme-dark .modal-footer {
+    border-top-color: #2b2b2b;
+}

@@ -21,6 +21,21 @@
             TodayJournal="todaysJournal"
         />
     }
+
+    <Modal 
+        IsOpen="IsDeleteModalOpen"
+        Variant="ModalVariant.Danger" 
+        Title="Delete Journal"
+        Message="Are you sure you want to delete today’s entry?"
+        ExtraText="Deleting this journal entry will remove today’s journal entry and also remove today’s streak." 
+        ConfirmText="Delete"
+        CloseOnOverlayClick="true"
+        OnConfirm="DeleteJournal"
+        OnCancel="() => SetIsDeleteModalOpen(false)"
+        OnClose="() => SetIsDeleteModalOpen(false)"
+    />
+
+
     <div class="home-header">
         <h1 class="page-title">Home</h1>
         <div class="header-actions">
@@ -71,18 +86,32 @@
                     <div id="editor"
                          style="height:200px;">
                     </div>
-                    <Button
-                        Icon="upload"
-                        Variant="ButtonVariant.PrimaryGradient"
-                        OnClick="() => SetIsSaveModelOpen(!IsSaveModalOpen)"
-                        Disabled="@IsSaveDisabled()" 
-                        Title="Submit"
-                        InvertIcon="true"
-                        Style="width: 2.5rem; height: 2.5rem; border-radius: 50%; align-self: flex-end;"
-                        IconSize="1.25rem"
-                        ZoomEffect="true"
-                        Shadow="true"
-                    />
+                    <div style="display: flex; gap: 8px; align-self: flex-end;">
+                        <Button
+                            Icon="trash"
+                            Variant="ButtonVariant.Danger"
+                            OnClick="() => SetIsDeleteModalOpen(!IsDeleteModalOpen)"
+                            Disabled="@(todaysJournal == null)"
+                            Title="Delete"
+                            InvertIcon="true"
+                            Style="width: 2.5rem; height: 2.5rem; border-radius: 50%;"
+                            IconSize="1.25rem"
+                            ZoomEffect="true"
+                            Shadow="true" 
+                        />
+                        <Button
+                            Icon="upload"
+                            Variant="ButtonVariant.PrimaryGradient"
+                            OnClick="() => SetIsSaveModelOpen(!IsSaveModalOpen)"
+                            Disabled="@IsSaveDisabled()" 
+                            Title="Submit"
+                            InvertIcon="true"
+                            Style="width: 2.5rem; height: 2.5rem; border-radius: 50%; align-self: flex-end;"
+                            IconSize="1.25rem"
+                            ZoomEffect="true"
+                            Shadow="true"
+                        />
+                    </div>
                 </div>
 
             </div>
@@ -96,6 +125,7 @@
     private string TextContent = "";
     private int WordCount = 0;
     private bool IsSaveModalOpen = false;
+    private bool IsDeleteModalOpen = false;
     public List<Mood> Moods = [];
     public List<Tag> Tags = [];
     private UserViewModel? currentUser = null;
@@ -148,6 +178,16 @@
     {
         IsSaveModalOpen = value;
         LoggerService.LogInfo($"Save model state: {IsSaveModalOpen}");
+    }
+
+    public void SetIsDeleteModalOpen(bool value)
+    {
+        IsDeleteModalOpen = value;
+    }
+
+    private async Task DeleteJournal()
+    {
+        await Task.Delay(1000);
     }
 
     private async Task SubmitJournal(JournalDataFromModal journalData)
