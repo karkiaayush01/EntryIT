@@ -1,23 +1,15 @@
 .button {
     border: none;
-    width: 10rem;
-    height: 4rem;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
-
-    .button:not(:disabled):hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(78, 84, 200, 0.4);
-    }
-
-    .button:not(:disabled):active {
-        transform: scale(0.95);
-    }
 
     /* Disabled state */
     .button:disabled {
@@ -28,10 +20,41 @@
         opacity: 0.7;
     }
 
+.zoom-effect:not(:disabled):hover {
+    transform: scale(1.05);
+}
+    .zoom-effect:not(:disabled):active {
+        transform: scale(0.95);
+    }
+
+.shadow:not(:disabled):hover {
+    box-shadow: 0 4px 12px rgba(78, 84, 200, 0.4);
+}
+
 .btn-gradient {
     background: var(--gradient_bg);
+    color: white;
 }
 
 .btn-primary {
     background: var(--primary);
+    color: white;
 }
+    .btn-primary:hover{
+        opacity: 0.9;
+    }
+
+.btn-danger {
+    background: #ff4d4f;
+}
+    .btn-danger:hover {
+        background: #d9363e;
+    }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text);
+}
+    .btn-ghost:hover {
+        background: var(--hover-bg);
+    }

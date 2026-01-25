@@ -51,10 +51,8 @@
                 @selectedTagIds.Count selected
             </div>
             <div class="footer-actions">
-                <button type="button" class="btn-cancel" @onclick="Close">Cancel</button>
-                <button type="button" class="btn-confirm bg-primary" @onclick="ConfirmSelection">
-                    Add Tags
-                </button>
+                <Button Variant="ButtonVariant.Ghost" Text="Cancel" OnClick="Close" Style="font-weight: 600" />
+                <Button Variant="ButtonVariant.Primary" Text="Add Tags" OnClick="ConfirmSelection" Style="font-weight: 600" />
             </div>
         </div>
     </div>

@@ -1,7 +1,13 @@
 ﻿@* Button.razor *@
 @* A Global Resuable Button Component used everywhere within the application *@
 
-<button class=@($"button {VariantMap[Variant]}") @onclick="OnClick" disabled="@Disabled" title="@Title" style="@Style">
+<button 
+	type="@Type"
+	class=@($"button {VariantMap[Variant]} {(ZoomEffect ? "zoom-effect" : "")} {(Shadow ? "shadow" : "")}")
+	@onclick="OnClick" 
+	disabled="@Disabled" title="@Title" 
+	style="@Style"
+>
 	@if (Icon != null)
 	{
 		<img 
@@ -27,6 +33,9 @@
 	[Parameter] public string? Title { get; set; } = string.Empty;
 	[Parameter] public bool InvertIcon { get; set; } = false;
 	[Parameter] public string? IconSize { get; set; }
+	[Parameter] public bool ZoomEffect { get; set; } = false;
+	[Parameter] public string Type { get; set; } = "button";
+	[Parameter] public bool Shadow { get; set; } = false;
 
 	// Mapping variant enum to respective classes
 	private static readonly Dictionary<ButtonVariant, string> VariantMap = new()
