@@ -30,7 +30,7 @@
         ExtraText="Deleting this journal entry will remove today’s journal entry and also remove today’s streak." 
         ConfirmText="Delete"
         CloseOnOverlayClick="true"
-        OnConfirm="DeleteJournal"
+        OnConfirm="HandleDeleteJournal"
         OnCancel="() => SetIsDeleteModalOpen(false)"
         OnClose="() => SetIsDeleteModalOpen(false)"
     />
@@ -185,9 +185,39 @@
         IsDeleteModalOpen = value;
     }
 
-    private async Task DeleteJournal()
+    private async Task HandleDeleteJournal()
     {
-        await Task.Delay(1000);
+        try
+        {
+            if (todaysJournal == null || currentUser == null)
+            {
+                Toast.Error("Failed to delete journal: User not authenticated.");
+                return;
+            }
+
+            Toast.Info("Deleting journal...");
+            var deleteResponse = await JournalService.DeleteJournal();
+            if (deleteResponse.Success)
+            {
+                Toast.Success("Successfully Deleted Today's Entry");
+                await AuthService.RefreshUser();
+                await GetTodaysJournal();
+            }
+            else
+            {
+                Toast.Error(deleteResponse.ErrorMessage ?? "Failed to delete journal");
+            }
+        }
+        catch(Exception ex)
+        {
+            LoggerService.LogError($"Failed to delete journal: {ex.Message}");
+            Toast.Error("An error occurred while deleting journal");
+        }
+        finally
+        {
+            // Close the modal
+            IsDeleteModalOpen = false;
+        }
     }
 
     private async Task SubmitJournal(JournalDataFromModal journalData)
@@ -240,6 +270,18 @@
             primaryMoodToday = Moods.FirstOrDefault(m => m.Id == todaysJournal?.PrimaryMood);
             secondaryMood1Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood1);
             secondaryMood2Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood2);
+        } 
+        else
+        {
+            // Reset fields if no journal for today
+            todaysJournal = null;
+            primaryMoodToday = null;
+            secondaryMood1Today = null;
+            secondaryMood2Today = null;
+            HtmlContent = string.Empty;
+            TextContent = string.Empty;
+
+            await JS.InvokeVoidAsync("setQuillHtml", string.Empty);
         }
     }
 

@@ -200,6 +200,8 @@ public  class JournalService: IJournalService
     {
         try
         {
+            //Simulate API
+            await Task.Delay(2000);
             var currentUser = _authService.GetCurrentUser();
             if (currentUser == null)
             {
@@ -207,7 +209,7 @@ public  class JournalService: IJournalService
             }
 
             // Get today's journal
-            DateTime today = DateTimeUtils.GetUtcDateTime();
+            DateTime today = DateTimeUtils.GetTodayLocalDate();
 
             Journal? journalToday = await _context.Journals
                 .Where(j => j.CreatedBy == currentUser.Id && j.SaveDate == today)
@@ -219,6 +221,7 @@ public  class JournalService: IJournalService
             } 
             else
             {
+                // Remove all the Tag entries
                 List<Journal_Tag> tagsToDelete = _context.Journal_Tags.Where(t => t.JournalId == journalToday.Id).ToList();
                 _context.Journal_Tags.RemoveRange(tagsToDelete);
                 _context.Journals.Remove(journalToday);
@@ -315,49 +318,147 @@ public  class JournalService: IJournalService
         }
     }
 
-    /// <summary>
-    /// Delete today's journal
-    /// </summary>
-    /// <param name="userId">User who requested to delete their journal</param>
-    /// <param name="journalId">Journal Id to be deleted</param>
-    /// <returns>Success or Failure based on delete operation</returns>
-    /// <exception cref="ArgumentNullException">Missing userId or JournalId</exception>
-    public async Task<ServiceResult<object?>> DeleteJournal(Guid userId, Guid journalId)
+    public async Task<ServiceResult<List<JournalSearchResponse>>> GetJournalLists(JournalSearchFilters filters)
     {
         try
         {
-            // Argument validations
-            if(userId == Guid.Empty || journalId == Guid.Empty)
+            var currentUser = _authService.GetCurrentUser();
+            if (currentUser == null)
             {
-                throw new ArgumentNullException($"Missing user id or journal id");
+                return ServiceResult<List<JournalSearchResponse>>.FailureResult("User not authenticated");
             }
 
-            DateTime today = DateTimeUtils.GetTodayLocalDate();
+            // Build the base query
+            IQueryable<Journal> query = _context.Journals
+                .Where(j => j.CreatedBy == currentUser.Id);
 
-            Journal? journal = await _context.Journals
-                .Where(j => j.CreatedBy == userId && j.Id == journalId)
-                .FirstOrDefaultAsync();
+            // Apply search filter if provided
+            if (!string.IsNullOrWhiteSpace(filters.SearchKey))
+            {
+                string searchTerm = filters.SearchKey.ToLower();
+                query = query.Where(j =>
+                    j.Title.ToLower().Contains(searchTerm) ||
+                    j.Content.ToLower().Contains(searchTerm)
+                );
+            }
 
-            if (journal == null)
+            // Apply date range filters
+            if (filters.FromDate.HasValue)
             {
-                throw new Exception($"Could not find journal");
+                query = query.Where(j => j.SaveDate >= filters.FromDate.Value.Date);
             }
-            else if (journal.SaveDate != today)
-            {
-                throw new Exception("Cannot delete journal that was not created today");
-            }
-            else
-            {
-                // Delete the journal
-                _context.Journals.Remove(journal);
-                await _context.SaveChangesAsync();
 
-                return ServiceResult<object?>.SuccessResult(null);
+            query = query.Where(j => j.SaveDate <= filters.ToDate.Date);
+
+            // Order by SaveDate descending (most recent first)
+            query = query.OrderByDescending(j => j.SaveDate);
+
+            // Apply pagination
+            int skip = (filters.Page - 1) * filters.PerPage;
+            var journals = await query
+                .Skip(skip)
+                .Take(filters.PerPage)
+                .ToListAsync();
+
+            if (!journals.Any())
+            {
+                return ServiceResult<List<JournalSearchResponse>>.SuccessResult(new List<JournalSearchResponse>());
             }
+
+            // Get all journal IDs for batch operations
+            var journalIds = journals.Select(j => j.Id).ToList();
+
+            // Batch fetch all tags for all journals
+            var allJournalTags = await (
+                from jt in _context.Journal_Tags
+                join t in _context.Tags on jt.TagId equals t.Id
+                where journalIds.Contains(jt.JournalId)
+                select new { jt.JournalId, Tag = t }
+            ).ToListAsync();
+
+            var journalTagsDict = allJournalTags
+                .GroupBy(x => x.JournalId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.Tag).ToList());
+
+            // Get all unique mood IDs
+            var moodIds = journals
+                .SelectMany(j => new[] { j.PrimaryMood, j.SecondaryMood1, j.SecondaryMood2 })
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            // Batch fetch all moods
+            var moods = await _context.Moods
+                .Where(m => moodIds.Contains(m.Id))
+                .ToDictionaryAsync(m => m.Id);
+
+            // Map to response model
+            List<JournalSearchResponse> results = new List<JournalSearchResponse>();
+
+            foreach (var journal in journals)
+            {
+                JournalSearchResponse response = new JournalSearchResponse
+                {
+                    JournalId = journal.Id,
+                    Title = journal.Title,
+                    SaveDate = journal.SaveDate,
+                    IsLocked = journal.IsLocked
+                };
+
+                // Only include journal info if not locked
+                if (!journal.IsLocked)
+                {
+                    // Get tags for this journal
+                    var tags = journalTagsDict.GetValueOrDefault(journal.Id, new List<Tag>());
+
+                    // Get mood data from dictionary
+                    var primaryMood = moods.GetValueOrDefault(journal.PrimaryMood);
+                    var secondaryMood1 = journal.SecondaryMood1 != Guid.Empty
+                        ? moods.GetValueOrDefault(journal.SecondaryMood1)
+                        : null;
+                    var secondaryMood2 = journal.SecondaryMood2 != Guid.Empty
+                        ? moods.GetValueOrDefault(journal.SecondaryMood2)
+                        : null;
+
+                    response.JournalInfo = new JournalExtraInfo
+                    {
+                        Content = journal.Content,
+                        ContentRaw = journal.Content,
+                        WordCount = journal.WordCount,
+                        PrimaryMood = primaryMood != null ? new MoodViewModel
+                        {
+                            Id = primaryMood.Id,
+                            Name = primaryMood.Name,
+                            Category = primaryMood.Category,
+                            Emoji = primaryMood.Emoji
+                        } : new MoodViewModel(),
+                        SecondaryMood1 = secondaryMood1 != null ? new MoodViewModel
+                        {
+                            Id = secondaryMood1.Id,
+                            Name = secondaryMood1.Name,
+                            Category = secondaryMood1.Category,
+                            Emoji = secondaryMood1.Emoji
+                        } : null,
+                        SecondaryMood2 = secondaryMood2 != null ? new MoodViewModel
+                        {
+                            Id = secondaryMood2.Id,
+                            Name = secondaryMood2.Name,
+                            Category = secondaryMood2.Category,
+                            Emoji = secondaryMood2.Emoji
+                        } : null,
+                        SelectedTags = tags
+                    };
+                }
+
+                results.Add(response);
+            }
+
+            return ServiceResult<List<JournalSearchResponse>>.SuccessResult(results);
         }
         catch (Exception ex)
         {
-            return ServiceResult<object?>.FailureResult($"An error occurred while deleting journal: {ex.Message}");
+            _loggerService.LogError($"Failed to get journal lists: {ex.Message}");
+            return ServiceResult<List<JournalSearchResponse>>.FailureResult($"Failed to get results: {ex.Message}");
         }
     }
 
