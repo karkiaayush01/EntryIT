@@ -20,4 +20,6 @@ public interface IJournalService
     Task<ServiceResult<JournalViewModel>> GetJournal(bool today, Guid userId, Guid journalId);
 
     Task<ServiceResult<object?>> DeleteJournal(Guid userId, Guid journalId);
+
+    public event Action? OnChange;
 }

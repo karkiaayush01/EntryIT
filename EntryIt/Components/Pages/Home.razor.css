@@ -181,46 +181,6 @@
         background-color: #E8E8E8;
     }
 
-/* Submit Button */
-.submit-btn {
-    background: var(--gradient_bg);
-    border: none;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
-    align-self: flex-end;
-}
-
-    .submit-btn:not(:disabled):hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(78, 84, 200, 0.4);
-    }
-
-    .submit-btn:not(:disabled):active {
-        transform: scale(0.95);
-    }
-
-    /* Disabled state */
-    .submit-btn:disabled {
-        background: #9ca3af; /* grey */
-        cursor: not-allowed;
-        box-shadow: none;
-        transform: none;
-        opacity: 0.7;
-    }
-
-.submit-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    filter: brightness(0) invert(1);
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .home-container {

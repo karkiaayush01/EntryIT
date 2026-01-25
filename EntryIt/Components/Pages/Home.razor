@@ -71,9 +71,16 @@
                     <div id="editor"
                          style="height:200px;">
                     </div>
-                    <button class="submit-btn" @onclick="() => SetIsSaveModelOpen(!IsSaveModalOpen)" disabled="@IsSaveDisabled()" title="Submit">
-                        <img src="assets/icons/upload.svg" alt="Submit" class="submit-icon" />
-                    </button>
+                    <Button
+                        Icon="upload"
+                        Variant="ButtonVariant.PrimaryGradient"
+                        OnClick="() => SetIsSaveModelOpen(!IsSaveModalOpen)"
+                        Disabled="@IsSaveDisabled()" 
+                        Title="Submit"
+                        InvertIcon="true"
+                        Style="width: 2.5rem; height: 2.5rem; border-radius: 50%; align-self: flex-end;"
+                        IconSize="1.25rem"
+                    />
                 </div>
 
             </div>
@@ -121,7 +128,6 @@
         try
         {
             HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
-            LoggerService.LogInfo($"Editor changed, new content: {HtmlContent}");
             TextContent = (await JS.InvokeAsync<string>("getQuillText")).Trim();
             StateHasChanged();
         }
@@ -170,10 +176,28 @@
         {
             Toast.Success("Successfully saved journal");
             await AuthService.RefreshUser();
+            await GetTodaysJournal();
         }
         else
         {
             Toast.Error(saveResponse.ErrorMessage ?? "Failed to save journal");
+        }
+    }
+
+    private async Task GetTodaysJournal()
+    {
+        LoggerService.LogInfo("Getting today's journal");
+        Guid userId = currentUser?.Id ?? Guid.Empty;
+        var todaysJournalFetch = await JournalService.GetJournal(true, userId, Guid.Empty);
+        if (todaysJournalFetch.Success)
+        {
+            LoggerService.LogInfo("Successfully received today's journal");
+            todaysJournal = todaysJournalFetch.Data;
+            LoggerService.LogInfo($"Content: {todaysJournal?.Content}");
+
+            primaryMoodToday = Moods.FirstOrDefault(m => m.Id == todaysJournal?.PrimaryMood);
+            secondaryMood1Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood1);
+            secondaryMood2Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood2);
         }
     }
 
@@ -193,19 +217,7 @@
             Tags = tagsResult.Data ?? [];
         }
 
-        LoggerService.LogInfo("Getting today's journal");
-        Guid userId = currentUser?.Id ?? Guid.Empty;
-        var todaysJournalFetch = await JournalService.GetJournal(true, userId, Guid.Empty);
-        if (todaysJournalFetch.Success)
-        {
-            LoggerService.LogInfo("Successfully received today's journal");
-            todaysJournal = todaysJournalFetch.Data;
-            LoggerService.LogInfo($"Content: {todaysJournal?.Content}");
-
-            primaryMoodToday = Moods.FirstOrDefault(m => m.Id == todaysJournal?.PrimaryMood);
-            secondaryMood1Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood1);
-            secondaryMood2Today = Moods.FirstOrDefault(m => m.Id == todaysJournal?.SecondaryMood2);
-        }
+        await GetTodaysJournal();
 
         currentAccent = ThemeService.GetCurrentAccent();
         ThemeService.OnChange += HandleThemeChanged;

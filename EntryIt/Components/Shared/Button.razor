@@ -1,0 +1,40 @@
+﻿@* Button.razor *@
+@* A Global Resuable Button Component used everywhere within the application *@
+
+<button class=@($"button {VariantMap[Variant]}") @onclick="OnClick" disabled="@Disabled" title="@Title" style="@Style">
+	@if (Icon != null)
+	{
+		<img 
+			src="@($"assets/icons/{Icon}.svg")" 
+			alt="Icon" class="btn-icon" 
+			style="@(InvertIcon ? "filter: brightness(0) invert(1);" : "")+@(IconSize!=null ? $"width: {IconSize}; height: {IconSize}": "")" 
+		/>
+	}
+
+	@if (Text != null)
+	{
+		<span class="btn-text">@(Text)</span>
+	}
+</button>
+
+@code {
+	[Parameter] public string? Text { get; set; }
+	[Parameter] public string? Icon { get; set; }
+	[Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Primary;
+	[Parameter] public string? Style { get; set; } = string.Empty;
+	[Parameter] public EventCallback OnClick { get; set; }
+	[Parameter] public bool? Disabled { get; set; } = false;
+	[Parameter] public string? Title { get; set; } = string.Empty;
+	[Parameter] public bool InvertIcon { get; set; } = false;
+	[Parameter] public string? IconSize { get; set; }
+
+	// Mapping variant enum to respective classes
+	private static readonly Dictionary<ButtonVariant, string> VariantMap = new()
+	{
+		{ ButtonVariant.PrimaryGradient, "btn-gradient" },
+		{ ButtonVariant.Primary, "btn-primary" },
+		{ ButtonVariant.Ghost, "btn-ghost" },
+		{ ButtonVariant.Danger, "btn-danger" },
+		{ ButtonVariant.Warning, "btn-warning" }
+	};
+}

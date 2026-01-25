@@ -4,7 +4,6 @@ using EntryIt.Entities;
 using Microsoft.EntityFrameworkCore;
 using EntryIt.Utils;
 using EntryIt.Models;
-using System.Threading.Tasks;
 namespace EntryIt.Services;
 
 public  class JournalService: IJournalService
@@ -13,6 +12,9 @@ public  class JournalService: IJournalService
     private readonly IAuthService _authService;
     private readonly IStreakService _streakService;
     private readonly ILoggerService _loggerService;
+
+    // OnChange Event. Used to notify users to refetch their journal content
+    public event Action? OnChange;
 
     public JournalService(AppDbContext context, IAuthService authService, IStreakService streakService, ILoggerService loggerService)
     {
@@ -184,8 +186,7 @@ public  class JournalService: IJournalService
                     UpdatedStreak = user.CurrentStreak
                 };
             }
-
-
+            
             return ServiceResult<SaveResponse>.SuccessResult(result);
         }
         catch (Exception ex)
@@ -359,5 +360,10 @@ public  class JournalService: IJournalService
             return ServiceResult<object?>.FailureResult($"An error occurred while deleting journal: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Notify Users of the state change to refetch their data.
+    /// </summary>
+    private void NotifyStateChanged() => OnChange?.Invoke();
 }
 
