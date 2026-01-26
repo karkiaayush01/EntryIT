@@ -1,0 +1,85 @@
+/* Journals.razor.css */
+/* Styles for the Journals page */
+
+/* Journal Container */
+.journal-container {
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 2rem;
+}
+
+.journal-search-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.journal-search-form {
+    display: flex;
+    gap: 16px;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 8px;
+}
+
+.theme-dark .search-icon {
+    filter: brightness(0) invert(1);
+}
+
+.search-input {
+    width: 600px;
+    background: var(--theme);
+    border: 1px solid #AFA6A6;
+    border-radius: 8px;
+    color: var(--text);
+    max-width: 40vw;
+    padding-left: 44px;
+}
+
+.filters {
+    font-size: 12px;
+    margin-top: 12px;
+}
+
+.date-filters {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #F2EEEE;
+}
+
+.theme-dark .date-filters {
+    background: #3A3A3A;
+}
+
+.search-results {
+    min-height: 200px;
+}
+
+.loading-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.theme-dark .loading-message {
+    color: #999;
+}
+
+.no-results-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.theme-dark .no-results-message {
+    color: #999;
+}

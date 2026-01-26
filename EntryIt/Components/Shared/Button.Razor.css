@@ -74,6 +74,6 @@
     background: transparent;
     color: var(--text);
 }
-    .btn-ghost:hover {
+    .btn-ghost:not(:disabled):hover {
         background: var(--hover-bg);
     }

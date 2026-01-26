@@ -1,0 +1,163 @@
+/* JournalSearchResultItem.razor.css */
+/* Styles for the journal search result item component */
+
+.search-result-item {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid #AFA6A6;
+}
+
+.search-result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.theme-dark .search-result-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 16px;
+}
+
+.result-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary);
+    flex: 1;
+}
+
+.result-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+.date-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.result-content {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.result-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.result-moods {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mood-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary);
+    color: white;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.mood-tag.primary{
+    border: 4px solid var(--selected-tab);
+}
+
+.mood-emoji {
+    font-size: 16px;
+}
+
+.mood-name {
+    line-height: 1;
+}
+
+.result-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tag-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.theme-light .tag-icon{
+    filter: invert(1);
+}
+
+.tags-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.tag-item {
+    padding: 4px 12px;
+    background: var(--selected-tab);
+    color: white;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.locked-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(156, 163, 175, 0.1);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.lock-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.theme-dark .lock-icon {
+    filter: brightness(0) invert(1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .result-date {
+        width: 100%;
+    }
+
+    .result-title {
+        font-size: 18px;
+    }
+}

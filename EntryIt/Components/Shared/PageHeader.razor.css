@@ -1,0 +1,55 @@
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Streak Counter */
+.streak-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background-color: #FFF4E6;
+    padding: 0.5rem 0.875rem;
+    border-radius: 20px;
+}
+
+.fire-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.streak-number {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #FF6B35;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--gradient_bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 0.875rem;
+}

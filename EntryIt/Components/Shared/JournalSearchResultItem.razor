@@ -1,0 +1,94 @@
+@* JournalSearchResultItem.razor *@
+@* A reusable component for displaying journal search results *@
+@using EntryIt.Models
+
+<div class="search-result-item">
+	<div class="result-header">
+		<h3 class="result-title">@Result.Title</h3>
+		<div class="result-date">
+			<img 
+				src="@($"assets/icons/accent_icons/{CurrentAccent}/calendar.svg")" 
+				alt="Calendar" 
+				class="date-icon" 
+			/>
+			<span>@Result.SaveDate.ToString("dd MMM, yyyy")</span>
+		</div>
+	</div>
+
+	@if (!Result.IsLocked && Result.JournalInfo != null)
+	{
+		<p class="result-content">@GetTrimmedContent(Result.JournalInfo.ContentRaw)</p>
+
+		<div class="result-footer">
+			<div class="result-moods">
+				@if (!string.IsNullOrEmpty(Result.JournalInfo.PrimaryMood.Emoji))
+				{
+					<div class="mood-tag primary">
+						<span class="mood-emoji">@Result.JournalInfo.PrimaryMood.Emoji</span>
+						<span class="mood-name">@Result.JournalInfo.PrimaryMood.Name</span>
+					</div>
+				}
+
+				@if (Result.JournalInfo.SecondaryMood1 != null && !string.IsNullOrEmpty(Result.JournalInfo.SecondaryMood1.Emoji))
+				{
+					<div class="mood-tag">
+						<span class="mood-emoji">@Result.JournalInfo.SecondaryMood1.Emoji</span>
+						<span class="mood-name">@Result.JournalInfo.SecondaryMood1.Name</span>
+					</div>
+				}
+
+				@if (Result.JournalInfo.SecondaryMood2 != null && !string.IsNullOrEmpty(Result.JournalInfo.SecondaryMood2.Emoji))
+				{
+					<div class="mood-tag">
+						<span class="mood-emoji">@Result.JournalInfo.SecondaryMood2.Emoji</span>
+						<span class="mood-name">@Result.JournalInfo.SecondaryMood2.Name</span>
+					</div>
+				}
+			</div>
+
+			@if (Result.JournalInfo.SelectedTags.Any())
+			{
+				<div class="result-tags">
+					<img 
+						src="assets/icons/tag.svg" 
+						alt="Tags" 
+						class="tag-icon" 
+					/>
+					<span class="tags-label">Tags:</span>
+					@foreach (var tag in Result.JournalInfo.SelectedTags)
+					{
+						<span class="tag-item">@tag.Name</span>
+					}
+				</div>
+			}
+		</div>
+	}
+	else if (Result.IsLocked)
+	{
+		<div class="locked-indicator">
+			<img src="assets/icons/lock.svg" alt="Locked" class="lock-icon" />
+			<span>This journal entry is locked</span>
+		</div>
+	}
+</div>
+
+@code {
+	[Parameter] public JournalSearchResponse Result { get; set; } = new();
+	[Parameter] public string CurrentAccent { get; set; } = "default";
+	[Parameter] public int MaxContentLength { get; set; } = 150;
+
+	private string GetTrimmedContent(string content)
+	{
+		if (string.IsNullOrEmpty(content))
+		{
+			return string.Empty;
+		}
+
+		if (content.Length <= MaxContentLength)
+		{
+			return content;
+		}
+
+		return content.Substring(0, MaxContentLength).TrimEnd() + "....";
+	}
+}

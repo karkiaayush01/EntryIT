@@ -1,0 +1,142 @@
+@* FilterPopup.razor *@
+@* A Popup component for filtering journals by date range *@
+
+<div class="filter-popup-wrapper">
+    <Button
+        Variant="ButtonVariant.Primary"
+        Icon="funnel"
+        Text="Filters"
+        InvertIcon="true"
+        OnClick="TogglePopup"
+        ZoomEffect="true"
+    />
+
+    @if (IsOpen)
+    {
+        <div class="filter-popup-overlay" @onclick="ClosePopup"></div>
+        <div class="filter-popup" @onclick:stopPropagation>
+            <div class="filter-popup-header">
+                <h4>Filter Journals</h4>
+                <Button 
+					Text="×"
+					Variant="ButtonVariant.Secondary" 
+					OnClick="ClosePopup"
+					Title="Close"
+					Style="border-radius: 50%; font-size: 24px; padding: 4px; width: 2rem; height: 2rem"
+				/>
+            </div>
+
+            <div class="filter-popup-body">
+                <div class="filter-field">
+                    <label class="filter-label">From Date</label>
+                    <input 
+                        type="date" 
+                        class="filter-date-input"
+                        value="@(FromDate?.ToString("yyyy-MM-dd"))"
+                        @onchange="OnFromDateChange"
+                        max="@ToDate.ToString("yyyy-MM-dd")"
+                    />
+                </div>
+
+                <div class="filter-field">
+                    <label class="filter-label">To Date</label>
+                    <input 
+                        type="date" 
+                        class="filter-date-input"
+                        value="@ToDate.ToString("yyyy-MM-dd")"
+                        @onchange="OnToDateChange"
+                        min="@(FromDate?.ToString("yyyy-MM-dd"))"
+                        max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                    />
+                </div>
+            </div>
+
+            <div class="filter-popup-footer">
+                <Button 
+                    Text="Clear" 
+                    Variant="ButtonVariant.Ghost" 
+                    OnClick="OnClear"
+                />
+                <Button 
+                    Text="Apply" 
+                    Variant="ButtonVariant.Primary" 
+                    OnClick="OnApply"
+                />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public DateTime? FromDate { get; set; }
+    [Parameter] public DateTime ToDate { get; set; } = DateTime.Now.Date;
+    [Parameter] public EventCallback<FilterDates> OnApplyFilter { get; set; }
+
+    private bool IsOpen { get; set; } = false;
+    private DateTime? TempFromDate { get; set; }
+    private DateTime TempToDate { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        TempFromDate = FromDate;
+        TempToDate = ToDate;
+    }
+
+    private void TogglePopup()
+    {
+        IsOpen = !IsOpen;
+        if (IsOpen)
+        {
+            TempFromDate = FromDate;
+            TempToDate = ToDate;
+        }
+    }
+
+    private void ClosePopup()
+    {
+        IsOpen = false;
+    }
+
+    private void OnFromDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
+        {
+            TempFromDate = date;
+        }
+    }
+
+    private void OnToDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
+        {
+            TempToDate = date;
+        }
+    }
+
+    private async Task OnClear()
+    {
+        TempFromDate = null;
+        TempToDate = DateTime.Now.Date;
+        
+        var filterDates = new FilterDates
+        {
+            FromDate = null,
+            ToDate = DateTime.Now.Date
+        };
+        
+        await OnApplyFilter.InvokeAsync(filterDates);
+        IsOpen = false;
+    }
+
+    private async Task OnApply()
+    {
+        var filterDates = new FilterDates
+        {
+            FromDate = TempFromDate,
+            ToDate = TempToDate
+        };
+        
+        await OnApplyFilter.InvokeAsync(filterDates);
+        IsOpen = false;
+    }
+}

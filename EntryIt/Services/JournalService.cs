@@ -31,6 +31,7 @@ public  class JournalService: IJournalService
             Id = journal.Id,
             Title = journal.Title,
             Content = journal.Content,
+            ConentRaw = journal.ContentRaw,
             WordCount = journal.WordCount,
             PrimaryMood = journal.PrimaryMood,
             SecondaryMood1 = journal.SecondaryMood1,
@@ -45,6 +46,7 @@ public  class JournalService: IJournalService
     public async Task<ServiceResult<SaveResponse>> SaveJournal(
         string journalTitle,
         string content,
+        string contentRaw,
         int wordCount,
         Guid primaryMood,
         Guid secondaryMood1,
@@ -67,7 +69,7 @@ public  class JournalService: IJournalService
                 lockPassword = (await _context.Users.FirstAsync(u => u.Id == user.Id)).JournalLockPassword;
             }
 
-            SaveResponse result = new SaveResponse();
+            SaveResponse result = new();
 
             if (user == null)
             {
@@ -91,10 +93,11 @@ public  class JournalService: IJournalService
 
             if (existingJournal == null)
             {
-                Journal newJournal = new Journal
+                Journal newJournal = new()
                 {
                     Title = journalTitle,
                     Content = content,
+                    ContentRaw = contentRaw,
                     CreatedBy = user.Id,
                     WordCount = wordCount,
                     PrimaryMood = primaryMood,
@@ -139,6 +142,7 @@ public  class JournalService: IJournalService
             {
                 existingJournal.Title = journalTitle;
                 existingJournal.Content = content;
+                existingJournal.ContentRaw = contentRaw;
                 existingJournal.WordCount = wordCount;
                 existingJournal.PrimaryMood = primaryMood;
                 existingJournal.SecondaryMood1 = secondaryMood1;
@@ -279,8 +283,8 @@ public  class JournalService: IJournalService
                 throw new ArgumentNullException("Journal Id is needed for journals not today");
             }
 
-            JournalViewModel mappedResult = new JournalViewModel{};
-            Journal? journal = new Journal();
+            JournalViewModel mappedResult = new JournalViewModel { };
+            Journal? journal = new();
             
             if(today)
             {
@@ -318,14 +322,14 @@ public  class JournalService: IJournalService
         }
     }
 
-    public async Task<ServiceResult<List<JournalSearchResponse>>> GetJournalLists(JournalSearchFilters filters)
+    public async Task<ServiceResult<JournalSearchResult>> GetJournalLists(JournalSearchFilters filters)
     {
         try
         {
             var currentUser = _authService.GetCurrentUser();
             if (currentUser == null)
             {
-                return ServiceResult<List<JournalSearchResponse>>.FailureResult("User not authenticated");
+                return ServiceResult<JournalSearchResult>.FailureResult("User not authenticated");
             }
 
             // Build the base query
@@ -338,7 +342,7 @@ public  class JournalService: IJournalService
                 string searchTerm = filters.SearchKey.ToLower();
                 query = query.Where(j =>
                     j.Title.ToLower().Contains(searchTerm) ||
-                    j.Content.ToLower().Contains(searchTerm)
+                    (j.ContentRaw.ToLower().Contains(searchTerm) && j.IsLocked == false)
                 );
             }
 
@@ -353,6 +357,10 @@ public  class JournalService: IJournalService
             // Order by SaveDate descending (most recent first)
             query = query.OrderByDescending(j => j.SaveDate);
 
+            // Get total count for pagination
+            int totalCount = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalCount / (double)filters.PerPage);
+
             // Apply pagination
             int skip = (filters.Page - 1) * filters.PerPage;
             var journals = await query
@@ -362,7 +370,12 @@ public  class JournalService: IJournalService
 
             if (!journals.Any())
             {
-                return ServiceResult<List<JournalSearchResponse>>.SuccessResult(new List<JournalSearchResponse>());
+                return ServiceResult<JournalSearchResult>.SuccessResult(new JournalSearchResult
+                {
+                    Results = new List<JournalSearchResponse>(),
+                    CurrentPage = filters.Page,
+                    TotalPages = 0
+                });
             }
 
             // Get all journal IDs for batch operations
@@ -423,7 +436,7 @@ public  class JournalService: IJournalService
                     response.JournalInfo = new JournalExtraInfo
                     {
                         Content = journal.Content,
-                        ContentRaw = journal.Content,
+                        ContentRaw = journal.ContentRaw,
                         WordCount = journal.WordCount,
                         PrimaryMood = primaryMood != null ? new MoodViewModel
                         {
@@ -453,12 +466,19 @@ public  class JournalService: IJournalService
                 results.Add(response);
             }
 
-            return ServiceResult<List<JournalSearchResponse>>.SuccessResult(results);
+            var searchResult = new JournalSearchResult
+            {
+                Results = results,
+                CurrentPage = filters.Page,
+                TotalPages = totalPages
+            };
+
+            return ServiceResult<JournalSearchResult>.SuccessResult(searchResult);
         }
         catch (Exception ex)
         {
             _loggerService.LogError($"Failed to get journal lists: {ex.Message}");
-            return ServiceResult<List<JournalSearchResponse>>.FailureResult($"Failed to get results: {ex.Message}");
+            return ServiceResult<JournalSearchResult>.FailureResult($"Failed to get results: {ex.Message}");
         }
     }
 

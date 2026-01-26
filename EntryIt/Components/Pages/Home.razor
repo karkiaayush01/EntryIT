@@ -234,6 +234,7 @@
         ServiceResult<SaveResponse> saveResponse = await JournalService.SaveJournal(
             journalData.Title,
             HtmlContent,
+            TextContent,
             WordCount,
             journalData.PrimaryMood?.Id ?? Guid.Empty,
             secondary1,

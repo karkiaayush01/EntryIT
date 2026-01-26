@@ -7,6 +7,7 @@ public class JournalViewModel
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
+    public string ConentRaw { get; set; } = string.Empty;
     public int WordCount { get; set; } = 0;
     public Guid PrimaryMood { get; set; } = Guid.Empty;
     public Guid SecondaryMood1 { get; set; } = Guid.Empty;

@@ -1,0 +1,16 @@
+﻿<div class="page-header">
+    <h1 class="page-title">@PageTitle</h1>
+    <div class="header-actions">
+        <div class="streak-counter">
+            <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
+            <span class="streak-number">@CurrentStreak</span>
+        </div>
+        <div class="user-avatar">@CommonUtils.GetInitials(FullName)</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string PageTitle { get; set; } = string.Empty;
+    [Parameter] public int CurrentStreak { get; set; }
+    [Parameter] public string FullName { get; set; } = string.Empty;
+}

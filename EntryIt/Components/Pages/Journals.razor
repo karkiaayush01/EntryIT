@@ -1,0 +1,183 @@
+@page "/journal"
+
+@inject IAuthService AuthService
+@inject ILoggerService LoggerService
+@inject ThemeService ThemeService
+@inject IMoodService MoodService
+@inject IJournalService JournalService;
+@inject ITagService TagService
+@inject ToastService Toast
+
+<div class="journal-container">
+    <PageHeader
+        PageTitle="Journals"
+        CurrentStreak="CurrentUser?.CurrentStreak ?? 0"
+        FullName="@(CurrentUser?.FullName ?? string.Empty)"
+    />
+
+    <div class="journal-search-container">
+        <div class="journal-search-form">
+            <img src="@($"assets/icons/search.svg")" class="search-icon"/>
+            <input type="text" placeholder="Search for Journals..." value="@SearchTerm" class="search-input" @oninput="OnSearchInput"/>
+            <FilterPopup
+                FromDate="@FromDate"
+                ToDate="@ToDate"
+                OnApplyFilter="OnApplyFilter"
+            />
+        </div>
+
+        @if(FromDate != null)
+        {
+            <p class="filters"><span>Filters:</span> <span class="date-filters">@(FromDate?.ToString("dd MMM yyyy") + " To " + ToDate.ToString("dd MMM yyyy"))</span></p>
+        }
+
+        <div class="search-results" style="margin-top: 16px;">
+            @if(IsLoading)
+            {
+                <div class="loading-message">Loading journals...</div>
+            }
+            else if((SearchResult != null) && (SearchResult?.Results.Count > 0))
+            {
+                foreach(var result in SearchResult.Results)
+                {
+                    <JournalSearchResultItem
+                        Result="result"
+                        CurrentAccent="@CurrentAccent"
+                    />
+                }
+            }
+            else
+            {
+                <div class="no-results-message">No journals found</div>
+            }
+        </div>
+
+        @if(SearchResult != null && SearchResult.TotalPages > 0)
+        {
+            <Pagination 
+                CurrentPage="@CurrentPage"
+                TotalPages="@TotalPage"
+                OnPageChange="OnPageChange"
+                CurrentTheme="@CurrentTheme"
+            />
+        }
+    </div>
+</div>
+
+@code {
+
+
+
+
+
+
+
+    private UserViewModel? CurrentUser { get; set; } = null;
+    private List<Mood> Moods { get; set; } = [];
+    private List<Tag> Tags { get; set; } = [];
+    private string CurrentTheme { get; set; } = string.Empty;
+    private string CurrentAccent { get; set; } = string.Empty;
+    private String SearchTerm { get; set; } = string.Empty;
+    private DateTime? FromDate = null;
+    private DateTime ToDate = DateTime.Now.Date;
+    private JournalSearchResult? SearchResult = null;
+    private int CurrentPage = 1;
+    private int PerPage = 3;
+    private int TotalPage = 1;
+    private bool IsLoading = false;
+
+    private async Task GetSearchResult()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        // Construct filters
+        JournalSearchFilters filters = new JournalSearchFilters
+        {
+            SearchKey = SearchTerm,
+            FromDate = FromDate,
+            ToDate = ToDate,
+            Page = CurrentPage,
+            PerPage = PerPage
+        };
+
+        var searchResponse = await JournalService.GetJournalLists(filters);
+        if(searchResponse.Success)
+        {
+            SearchResult = searchResponse.Data;
+            CurrentPage = searchResponse.Data?.CurrentPage ?? 1;
+            TotalPage = searchResponse.Data?.TotalPages ?? 1;
+        }
+        else
+        {
+            Toast.Error("Failed to get search results");
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async void OnSearchInput(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? "";
+        CurrentPage = 1; // Reset to first page on new search
+        await GetSearchResult();
+    }
+
+    private async Task OnPageChange(int page)
+    {
+        CurrentPage = page;
+        await GetSearchResult();
+    }
+
+    private async Task OnApplyFilter(FilterDates filterDates)
+    {
+        FromDate = filterDates.FromDate;
+        ToDate = filterDates.ToDate;
+        CurrentPage = 1; // Reset to first page on filter change
+        await GetSearchResult();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        CurrentUser = AuthService.GetCurrentUser();
+
+        var moodResult = await MoodService.GetMoods();
+        if (moodResult.Success)
+        {
+            Moods = moodResult.Data ?? [];
+        }
+
+        var tagsResult = await TagService.GetTags();
+        if (tagsResult.Success)
+        {
+            Tags = tagsResult.Data ?? [];
+        }
+
+        await GetSearchResult();
+
+        CurrentAccent = ThemeService.GetCurrentAccent();
+        ThemeService.OnChange += HandleThemeChanged;
+        AuthService.OnChange += HandleAuthServiceChanged;
+    }
+
+    private void HandleThemeChanged()
+    {
+        CurrentTheme = ThemeService.GetCurrentTheme();
+        CurrentAccent = ThemeService.GetCurrentAccent();
+        StateHasChanged();
+    }
+
+    private void HandleAuthServiceChanged()
+    {
+        LoggerService.LogInfo("Auth service updated. Setting new user");
+        CurrentUser = AuthService.GetCurrentUser();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= HandleThemeChanged;
+        AuthService.OnChange -= HandleAuthServiceChanged;
+    }
+}

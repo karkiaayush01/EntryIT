@@ -1,0 +1,128 @@
+@* Pagination.razor *@
+@* A Global Reusable Pagination Component *@
+
+<div class="pagination-container">
+    <Button 
+        Icon="chevron-left"
+        Variant="ButtonVariant.Ghost"
+        OnClick="OnPrevious"
+        Disabled="@(CurrentPage <= 1)"
+        Title="Previous Page"
+        Style="padding: 0; height: 36px; width: 36px;" 
+        InvertIcon="@(CurrentTheme == "dark")"
+    />
+
+    <div class="pagination-pages">
+        @foreach (var page in GetPageNumbers())
+        {
+            @if (page == -1)
+            {
+                <span class="pagination-ellipsis">...</span>
+            }
+            else
+            {
+                <button 
+                    class=@($"pagination-page {(page == CurrentPage ? "active" : "")}")
+                    @onclick="() => OnPageClick(page)"
+                >
+                    @($"{page}")
+                </button>
+            }
+        }
+    </div>
+
+    <Button 
+        Icon="chevron-right"
+        Variant="ButtonVariant.Ghost"
+        OnClick="OnNext"
+        Disabled="@(CurrentPage >= TotalPages)"
+        Title="Next Page"
+        Style="padding: 0; height: 36px; width: 36px;"
+        InvertIcon="@(CurrentTheme == "dark")" 
+    />
+</div>
+
+@code {
+
+
+
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public EventCallback<int> OnPageChange { get; set; }
+    [Parameter] public string CurrentTheme { get; set; } = string.Empty;
+
+    private async Task OnPrevious()
+    {
+        if (CurrentPage > 1)
+        {
+            await OnPageChange.InvokeAsync(CurrentPage - 1);
+        }
+    }
+
+    private async Task OnNext()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            await OnPageChange.InvokeAsync(CurrentPage + 1);
+        }
+    }
+
+    private async Task OnPageClick(int page)
+    {
+        if (page != CurrentPage)
+        {
+            await OnPageChange.InvokeAsync(page);
+        }
+    }
+
+    private List<int> GetPageNumbers()
+    {
+        List<int> pages = new List<int>();
+        
+        if (TotalPages <= 7)
+        {
+            // Show all pages if total is 7 or less
+            for (int i = 1; i <= TotalPages; i++)
+            {
+                pages.Add(i);
+            }
+        }
+        else
+        {
+            // Always show first page
+            pages.Add(1);
+
+            if (CurrentPage <= 3)
+            {
+                // Near start: 1 2 3 4 ... last
+                for (int i = 2; i <= 4; i++)
+                {
+                    pages.Add(i);
+                }
+                pages.Add(-1); // Ellipsis
+                pages.Add(TotalPages);
+            }
+            else if (CurrentPage >= TotalPages - 2)
+            {
+                // Near end: 1 ... (last-3) (last-2) (last-1) last
+                pages.Add(-1); // Ellipsis
+                for (int i = TotalPages - 3; i <= TotalPages; i++)
+                {
+                    pages.Add(i);
+                }
+            }
+            else
+            {
+                // Middle: 1 ... (current-1) current (current+1) ... last
+                pages.Add(-1); // Ellipsis
+                pages.Add(CurrentPage - 1);
+                pages.Add(CurrentPage);
+                pages.Add(CurrentPage + 1);
+                pages.Add(-1); // Ellipsis
+                pages.Add(TotalPages);
+            }
+        }
+
+        return pages;
+    }
+}

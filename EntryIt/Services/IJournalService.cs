@@ -21,6 +21,7 @@ public interface IJournalService
     Task<ServiceResult<SaveResponse>> SaveJournal(
         string journalTitle,
         string content, 
+        string contentRaw,
         int wordCount,
         Guid primaryMood, 
         Guid secondaryMood1,
@@ -39,7 +40,7 @@ public interface IJournalService
     /// <returns>Success or Failure status</returns>
     Task<ServiceResult<object?>> DeleteJournal();
 
-    Task<ServiceResult<List<JournalSearchResponse>>> GetJournalLists(JournalSearchFilters filters);
+    Task<ServiceResult<JournalSearchResult>> GetJournalLists(JournalSearchFilters filters);
 
     public event Action? OnChange;
 }

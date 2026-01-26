@@ -1,0 +1,125 @@
+/* FilterPopup.razor.css */
+/* Styles for the FilterPopup component */
+
+.filter-popup-wrapper {
+    position: relative;
+}
+
+.filter-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+}
+
+.filter-popup {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    min-width: 320px;
+    z-index: 1000;
+    animation: filterPopupFadeIn 0.2s ease;
+}
+
+.theme-dark .filter-popup {
+    background: #1a1a1a;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes filterPopupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.theme-dark .filter-popup-header {
+    border-bottom-color: #2b2b2b;
+}
+
+.filter-popup-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.theme-dark .filter-popup-header h4 {
+    color: #fff;
+}
+
+.filter-popup-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.theme-dark .filter-label {
+    color: #ccc;
+}
+
+.filter-date-input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--theme);
+    color: var(--text);
+    transition: border-color 0.2s ease;
+}
+
+.filter-date-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.theme-dark .filter-date-input {
+    border-color: #3a3a3a;
+}
+
+.theme-dark .filter-date-input:focus {
+    border-color: var(--primary);
+}
+
+.filter-popup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.theme-dark .filter-popup-footer {
+    border-top-color: #2b2b2b;
+}

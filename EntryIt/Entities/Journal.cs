@@ -7,6 +7,7 @@ public class Journal
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
+    public string ContentRaw { get; set; } = string.Empty;
     public Guid CreatedBy { get; set; } = Guid.Empty;
     public int WordCount { get; set; } = 0;
     public Guid PrimaryMood { get; set; } = Guid.Empty;
