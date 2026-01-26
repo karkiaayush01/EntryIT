@@ -9,6 +9,7 @@ window.initQuill = (editorId) => {
                 [{ list: "ordered" }, { list: "bullet" }],
                 [{ header: [1, 2, false] }],
                 [{ 'color': [] }, { 'background': [] }],
+                ["link"],
                 ["clean"]
             ]
         }

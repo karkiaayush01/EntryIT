@@ -11,6 +11,7 @@
     --hover-bg: #F0F0F0;
     --theme-selector-active-bg: rgba(78, 84, 200, 0.7);
     --dialog: #FFFFFF;
+    --custom-grey: #AFA6A6;
 }
 
 html, body, .page {
@@ -158,6 +159,10 @@ bg-theme {
 
 .selected-tab {
     background: var(--selected-tab);
+}
+
+.border-grey {
+    border: 1px solid var(--custom-grey);
 }
 
 /* Override css classes using tailwind like structure */

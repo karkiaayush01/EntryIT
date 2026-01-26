@@ -1,4 +1,4 @@
-@* JournalDetail.razor *@
+﻿@* JournalDetail.razor *@
 @page "/journal/{JournalId:guid}"
 
 @inject IAuthService AuthService
@@ -9,6 +9,12 @@
 @inject NavigationManager Navigation
 
 <div class="journal-detail-container">
+    <PageHeader
+        PageTitle="Journal"
+        CurrentStreak="@(CurrentUser?.CurrentStreak ?? 0)"
+        FullName="@(CurrentUser?.FullName ?? string.Empty)"
+    />
+
     @if (IsLoading)
     {
         <div class="loading-container">
@@ -17,17 +23,82 @@
     }
     else if (JournalData != null)
     {
-        <div class="journal-content">
-            <h1>@JournalData.Title</h1>
-            <p>@JournalData.SaveDate.ToString("MMMM dd, yyyy")</p>
-            <div class="journal-body">
-                @((MarkupString)JournalData.Content)
+        <div class="journal-detail-content">
+            <button class="back-button" @onclick="NavigateBack">
+                <img src="assets/icons/chevron-left.svg" alt="Back" class="back-icon" />
+                Back to Journals
+            </button>
+
+            <div class="journal-header">
+                <h1 class="journal-title text-primary">@JournalData.Title</h1>
+
+                <div class="journal-metadata">
+                    <div class="journal-metadata-moods">
+                        @if (PrimaryMood != null)
+                        {
+                            <div class="metadata-section">
+                                <span class="metadata-label">Primary Mood:</span>
+                                <div class="mood-pill primary-mood bg-primary">
+                                    <span class="mood-emoji">@PrimaryMood.Emoji</span>
+                                    <span class="mood-name">@PrimaryMood.Name</span>
+                                </div>
+                            </div>
+                        }
+
+                        @if (SecondaryMood1 != null || SecondaryMood2 != null)
+                        {
+                            <div class="metadata-section">
+                                <span class="metadata-label">Secondary Mood:</span>
+                                <div class="mood-pills-container">
+                                    @if (SecondaryMood1 != null)
+                                    {
+                                        <div class="mood-pill secondary-mood bg-primary">
+                                            <span class="mood-emoji">@SecondaryMood1.Emoji</span>
+                                            <span class="mood-name">@SecondaryMood1.Name</span>
+                                        </div>
+                                    }
+                                    @if (SecondaryMood2 != null)
+                                    {
+                                        <div class="mood-pill secondary-mood bg-primary">
+                                            <span class="mood-emoji">@SecondaryMood2.Emoji</span>
+                                            <span class="mood-name">@SecondaryMood2.Name</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (JournalData.SelectedTags?.Any() == true)
+                    {
+                        <div class="metadata-section">
+                            <img src="assets/icons/tag.svg" alt="Tags" class="tags-icon" />
+                            <span class="metadata-label">Tags:</span>
+                            <div class="tags-container">
+                                @foreach (var tag in JournalData.SelectedTags)
+                                {
+                                    <span class="tag-pill selected-tab">@tag.Name</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="journal-content-box bg-theme border-grey">
+                <div class="journal-body">
+                    @((MarkupString)JournalData.Content)
+                </div>
+            </div>
+
+            <div class="journal-footer">
+                <span class="last-updated">Last Updated: @JournalData.LastUpdatedAt.ToString("dd MMM yyyy")</span>
             </div>
         </div>
     }
 
     @* Unlock Modal *@
-    <Modal
+    <Modal 
         IsOpen="@IsLockedModalOpen"
         OnClose="() => CloseLockModal()"
         Variant="ModalVariant.Warning"
@@ -39,20 +110,20 @@
                 <div class="lock-icon-container">
                     <img src="assets/icons/lock.svg" alt="Lock" class="lock-icon" />
                 </div>
-                
+
                 <h3 class="unlock-title">This Journal is Locked</h3>
                 <p class="unlock-message">Enter your password to view this journal entry</p>
-                
+
                 <div class="unlock-form">
                     <input 
-                        type="password" 
+                        type="password"
                         class="unlock-password-input"
                         placeholder="Enter password"
                         @bind-value="UnlockPassword"
                         @bind-value:event="oninput"
-                        @onkeyup="HandlePasswordKeyUp"
+                        @onkeyup="HandlePasswordKeyUp" 
                     />
-                    
+
                     @if (!string.IsNullOrEmpty(UnlockError))
                     {
                         <div class="unlock-error">
@@ -62,17 +133,13 @@
                 </div>
 
                 <div class="unlock-actions">
-                    <Button 
-                        Text="Cancel" 
-                        Variant="ButtonVariant.Ghost" 
-                        OnClick="HandleCancelUnlock"
-                    />
-                    <Button 
-                        Text="Unlock" 
-                        Variant="ButtonVariant.Primary" 
-                        OnClick="HandleUnlock"
-                        Disabled="@IsUnlockButtonDisabled()"
-                    />
+                    <Button Text="Cancel"
+                            Variant="ButtonVariant.Ghost"
+                            OnClick="HandleCancelUnlock" />
+                    <Button Text="Unlock"
+                            Variant="ButtonVariant.Primary"
+                            OnClick="HandleUnlock"
+                            Disabled="@IsUnlockButtonDisabled()" />
                 </div>
             </div>
         </Child>
@@ -83,13 +150,30 @@
 
     [Parameter] public Guid JournalId { get; set; }
 
+    private UserViewModel? CurrentUser { get; set; } = null;
     private JournalViewModel? JournalData = null;
+    private List<Mood> Moods = [];
+    private Mood? PrimaryMood = null;
+    private Mood? SecondaryMood1 = null;
+    private Mood? SecondaryMood2 = null;
     private bool IsLoading = false;
     private bool IsLockedModalOpen = false;
     private bool IsLocked = false;
     private bool IsUnlocking = false;
     private string UnlockPassword = string.Empty;
     private string UnlockError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = AuthService.GetCurrentUser();
+        
+        // Fetch all moods once
+        var moodResult = await MoodService.GetMoods();
+        if (moodResult.Success)
+        {
+            Moods = moodResult.Data ?? [];
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -98,8 +182,25 @@
         UnlockPassword = string.Empty;
         UnlockError = string.Empty;
         JournalData = null;
+        PrimaryMood = null;
+        SecondaryMood1 = null;
+        SecondaryMood2 = null;
 
         await CheckLockStatusAndLoadJournal();
+    }
+
+    private void MapMoods()
+    {
+        if (JournalData != null && Moods.Any())
+        {
+            PrimaryMood = Moods.FirstOrDefault(m => m.Id == JournalData.PrimaryMood);
+            SecondaryMood1 = JournalData.SecondaryMood1 != Guid.Empty 
+                ? Moods.FirstOrDefault(m => m.Id == JournalData.SecondaryMood1) 
+                : null;
+            SecondaryMood2 = JournalData.SecondaryMood2 != Guid.Empty 
+                ? Moods.FirstOrDefault(m => m.Id == JournalData.SecondaryMood2) 
+                : null;
+        }
     }
 
     private bool IsUnlockButtonDisabled()
@@ -158,6 +259,7 @@
         if (journalResult.Success && journalResult.Data != null)
         {
             JournalData = journalResult.Data;
+            MapMoods(); // Map mood GUIDs to mood objects
         }
         else
         {
@@ -201,6 +303,14 @@
         StateHasChanged();
     }
 
+    private void CloseLockModal()
+    {
+        if (!IsLocked)
+        {
+            IsLockedModalOpen = false;
+        }
+    }
+
     private async void HandlePasswordKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(UnlockPassword))
@@ -214,11 +324,8 @@
         Navigation.NavigateTo("/journal");
     }
 
-    private void CloseLockModal()
+    private void NavigateBack()
     {
-        if (!IsLocked)
-        {
-            IsLockedModalOpen = false;
-        }
+        Navigation.NavigateTo("/journal");
     }
 }
