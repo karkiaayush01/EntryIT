@@ -1,46 +1,28 @@
-@* Modal.razor *@
-@* A Global Reusable Modal Component used everywhere within the application *@
+﻿@*Modal.razor*@
+@*A global Modal component that provides the Modal overlay and wrapper but allows the caller to add their own child components*@
 
-@if (IsOpen)
+@if(IsOpen)
 {
 	<div class="modal-overlay" @onclick="HandleOverlayClick">
 		<div class="modal-container" @onclick:stopPropagation>
 			<div class="modal-header">
-				<h3 class="modal-title">@Title</h3>
-				<Button 
-					Text="�"
-					Variant="ButtonVariant.Secondary" 
-					OnClick="OnClose"
-					Title="Close"
-					Style="border-radius: 50%; font-size: 24px; padding: 4px; width: 2rem; height: 2rem"
-				/>
+				@if (ShowCloseButton)
+				{
+					<Button 
+						Text="×"
+						Variant="ButtonVariant.Secondary"
+						OnClick="OnClose"
+						Title="Close"
+						Style="border-radius: 50%; font-size: 24px; padding: 4px; width: 2rem; height: 2rem" 
+					/>
+				}
 			</div>
 
 			<div class="modal-body">
-				<p class="modal-message">@Message</p>
-
-				@if (!string.IsNullOrEmpty(ExtraText))
+				@if (Child != null)
 				{
-					<div class=@($"modal-extra-text {VariantExtraTextMap[Variant]}")>
-						@ExtraText
-					</div>
+					@Child
 				}
-			</div>
-
-			<div class="modal-footer">
-				@if (ShowCancelButton)
-				{
-					<Button 
-						Text="@CancelText" 
-						Variant="ButtonVariant.Ghost" 
-						OnClick="OnCancel"
-					/>
-				}
-				<Button 
-					Text="@ConfirmText" 
-					Variant="@ConfirmButtonVariant" 
-					OnClick="OnConfirm"
-				/>
 			</div>
 		</div>
 	</div>
@@ -48,34 +30,11 @@
 
 @code {
 	[Parameter] public bool IsOpen { get; set; }
-	[Parameter] public string Title { get; set; } = "Confirm";
-	[Parameter] public string Message { get; set; } = string.Empty;
-	[Parameter] public string? ExtraText { get; set; }
-	[Parameter] public ModalVariant Variant { get; set; } = ModalVariant.Success;
-	[Parameter] public string ConfirmText { get; set; } = "Confirm";
-	[Parameter] public string CancelText { get; set; } = "Cancel";
-	[Parameter] public bool ShowCancelButton { get; set; } = true;
-	[Parameter] public bool CloseOnOverlayClick { get; set; } = true;
-	[Parameter] public EventCallback OnConfirm { get; set; }
-	[Parameter] public EventCallback OnCancel { get; set; }
 	[Parameter] public EventCallback OnClose { get; set; }
-
-	// Mapping variant enum to button variant
-	private ButtonVariant ConfirmButtonVariant => Variant switch
-	{
-		ModalVariant.Success => ButtonVariant.Primary,
-		ModalVariant.Warning => ButtonVariant.Warning,
-		ModalVariant.Danger => ButtonVariant.Danger,
-		_ => ButtonVariant.Primary
-	};
-
-	// Mapping variant enum to extra text background classes
-	private static readonly Dictionary<ModalVariant, string> VariantExtraTextMap = new()
-	{
-		{ ModalVariant.Success, "extra-text-success" },
-		{ ModalVariant.Warning, "extra-text-warning" },
-		{ ModalVariant.Danger, "extra-text-danger" }
-	};
+	[Parameter] public bool CloseOnOverlayClick { get; set; } = true;
+	[Parameter] public ModalVariant Variant { get; set; } = ModalVariant.Danger;
+	[Parameter] public bool ShowCloseButton { get; set; } = true;
+	[Parameter] public RenderFragment? Child { get; set; }
 
 	private async Task HandleOverlayClick()
 	{

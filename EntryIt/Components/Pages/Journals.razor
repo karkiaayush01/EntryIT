@@ -7,6 +7,7 @@
 @inject IJournalService JournalService;
 @inject ITagService TagService
 @inject ToastService Toast
+@inject NavigationManager Nav
 
 <div class="journal-container">
     <PageHeader
@@ -40,10 +41,12 @@
             {
                 foreach(var result in SearchResult.Results)
                 {
-                    <JournalSearchResultItem
-                        Result="result"
-                        CurrentAccent="@CurrentAccent"
-                    />
+                    <div @onclick="() => NavigateToJournal(result.JournalId)">
+                        <JournalSearchResultItem
+                            Result="result"
+                            CurrentAccent="@CurrentAccent"
+                        />
+                    </div>
                 }
             }
             else
@@ -128,6 +131,11 @@
     {
         CurrentPage = page;
         await GetSearchResult();
+    }
+
+    private void NavigateToJournal(Guid journalId)
+    {
+        Nav.NavigateTo($"journal/{journalId}");
     }
 
     private async Task OnApplyFilter(FilterDates filterDates)

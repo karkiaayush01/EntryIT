@@ -42,5 +42,9 @@ public interface IJournalService
 
     Task<ServiceResult<JournalSearchResult>> GetJournalLists(JournalSearchFilters filters);
 
+    Task<ServiceResult<JournalLockStatus>> GetJournalLockStatus(Guid? JournalId);
+
+    Task<ServiceResult<JournalUnlockResponse>> UnlockJournal(Guid JournalId, string password);
+
     public event Action? OnChange;
 }

@@ -1,0 +1,224 @@
+@* JournalDetail.razor *@
+@page "/journal/{JournalId:guid}"
+
+@inject IAuthService AuthService
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ILoggerService LoggerService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+
+<div class="journal-detail-container">
+    @if (IsLoading)
+    {
+        <div class="loading-container">
+            <p>Loading journal...</p>
+        </div>
+    }
+    else if (JournalData != null)
+    {
+        <div class="journal-content">
+            <h1>@JournalData.Title</h1>
+            <p>@JournalData.SaveDate.ToString("MMMM dd, yyyy")</p>
+            <div class="journal-body">
+                @((MarkupString)JournalData.Content)
+            </div>
+        </div>
+    }
+
+    @* Unlock Modal *@
+    <Modal
+        IsOpen="@IsLockedModalOpen"
+        OnClose="() => CloseLockModal()"
+        Variant="ModalVariant.Warning"
+        ShowCloseButton="false"
+        CloseOnOverlayClick="false"
+    >
+        <Child>
+            <div class="unlock-modal-content">
+                <div class="lock-icon-container">
+                    <img src="assets/icons/lock.svg" alt="Lock" class="lock-icon" />
+                </div>
+                
+                <h3 class="unlock-title">This Journal is Locked</h3>
+                <p class="unlock-message">Enter your password to view this journal entry</p>
+                
+                <div class="unlock-form">
+                    <input 
+                        type="password" 
+                        class="unlock-password-input"
+                        placeholder="Enter password"
+                        @bind-value="UnlockPassword"
+                        @bind-value:event="oninput"
+                        @onkeyup="HandlePasswordKeyUp"
+                    />
+                    
+                    @if (!string.IsNullOrEmpty(UnlockError))
+                    {
+                        <div class="unlock-error">
+                            @UnlockError
+                        </div>
+                    }
+                </div>
+
+                <div class="unlock-actions">
+                    <Button 
+                        Text="Cancel" 
+                        Variant="ButtonVariant.Ghost" 
+                        OnClick="HandleCancelUnlock"
+                    />
+                    <Button 
+                        Text="Unlock" 
+                        Variant="ButtonVariant.Primary" 
+                        OnClick="HandleUnlock"
+                        Disabled="@IsUnlockButtonDisabled()"
+                    />
+                </div>
+            </div>
+        </Child>
+    </Modal>
+</div>
+
+@code {
+
+    [Parameter] public Guid JournalId { get; set; }
+
+    private JournalViewModel? JournalData = null;
+    private bool IsLoading = false;
+    private bool IsLockedModalOpen = false;
+    private bool IsLocked = false;
+    private bool IsUnlocking = false;
+    private string UnlockPassword = string.Empty;
+    private string UnlockError = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLockedModalOpen = false;
+        IsLocked = false;
+        UnlockPassword = string.Empty;
+        UnlockError = string.Empty;
+        JournalData = null;
+
+        await CheckLockStatusAndLoadJournal();
+    }
+
+    private bool IsUnlockButtonDisabled()
+    {
+        return string.IsNullOrWhiteSpace(UnlockPassword) || IsUnlocking;
+    }
+
+    private async Task CheckLockStatusAndLoadJournal()
+    {
+        IsLoading = true;
+
+        // First check if journal is locked
+        var lockStatusResult = await JournalService.GetJournalLockStatus(JournalId);
+
+        if (!lockStatusResult.Success)
+        {
+            Toast.Error("Failed to load journal");
+            Navigation.NavigateTo("/journal");
+            return;
+        }
+
+        LoggerService.LogInfo($"Received Lock Status");
+        LoggerService.LogInfo($"Is Locked: {lockStatusResult.Data?.IsLocked}");
+        LoggerService.LogInfo($"Id: {lockStatusResult.Data?.JournalId}");
+
+        IsLocked = lockStatusResult.Data?.IsLocked ?? false;
+
+        if (IsLocked)
+        {
+            // Show unlock modal
+            IsLockedModalOpen = true;
+            IsLoading = false;
+        }
+        else
+        {
+            // Load journal directly
+            IsLockedModalOpen = false;
+            await LoadJournal();
+        }
+    }
+
+    private async Task LoadJournal()
+    {
+        IsLoading = true;
+
+        var currentUser = AuthService.GetCurrentUser();
+        if (currentUser == null)
+        {
+            Toast.Error("Please log in to view journals");
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        var journalResult = await JournalService.GetJournal(false, currentUser.Id, JournalId);
+
+        if (journalResult.Success && journalResult.Data != null)
+        {
+            JournalData = journalResult.Data;
+        }
+        else
+        {
+            Toast.Error(journalResult.ErrorMessage ?? "Failed to load journal");
+            Navigation.NavigateTo("/journal");
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleUnlock()
+    {
+        if (string.IsNullOrWhiteSpace(UnlockPassword))
+        {
+            return;
+        }
+
+        IsUnlocking = true;
+        UnlockError = string.Empty;
+        StateHasChanged();
+
+        var unlockResult = await JournalService.UnlockJournal(JournalId, UnlockPassword);
+
+        if (unlockResult.Success && unlockResult.Data?.HasUnlocked == true)
+        {
+            // Successfully unlocked, load the journal
+            IsLockedModalOpen = false;
+            IsLocked = false;
+            UnlockPassword = string.Empty;
+            await LoadJournal();
+        }
+        else
+        {
+            // Show error
+            UnlockError = unlockResult.ErrorMessage ?? "Incorrect password. Please try again.";
+            UnlockPassword = string.Empty;
+        }
+
+        IsUnlocking = false;
+        StateHasChanged();
+    }
+
+    private async void HandlePasswordKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(UnlockPassword))
+        {
+            await HandleUnlock();
+        }
+    }
+
+    private void HandleCancelUnlock()
+    {
+        Navigation.NavigateTo("/journal");
+    }
+
+    private void CloseLockModal()
+    {
+        if (!IsLocked)
+        {
+            IsLockedModalOpen = false;
+        }
+    }
+}

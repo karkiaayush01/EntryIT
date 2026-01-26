@@ -68,6 +68,10 @@ public  class JournalService: IJournalService
             {
                 lockPassword = (await _context.Users.FirstAsync(u => u.Id == user.Id)).JournalLockPassword;
             }
+            else
+            {
+                lockPassword = BCrypt.Net.BCrypt.HashPassword(lockPassword);
+            }
 
             SaveResponse result = new();
 
@@ -83,10 +87,7 @@ public  class JournalService: IJournalService
                 j => j.CreatedBy == user.Id && j.SaveDate == today
             );
 
-            if(lockJournal)
-            {
-                lockPassword = BCrypt.Net.BCrypt.HashPassword(lockPassword);
-            } else
+            if(!lockJournal)
             {
                 lockPassword = string.Empty;
             }
@@ -479,6 +480,94 @@ public  class JournalService: IJournalService
         {
             _loggerService.LogError($"Failed to get journal lists: {ex.Message}");
             return ServiceResult<JournalSearchResult>.FailureResult($"Failed to get results: {ex.Message}");
+        }
+    }
+
+    public async Task<ServiceResult<JournalLockStatus>> GetJournalLockStatus(Guid? JournalId)
+    {
+        try
+        {
+            if (JournalId == null || JournalId == Guid.Empty) throw new Exception("Could not get journal Id");
+
+            bool? isLocked = await _context.Journals
+                .Where(j => j.Id == JournalId)
+                .Select(j => j.IsLocked)
+                .FirstOrDefaultAsync();
+
+            if (isLocked == null) throw new Exception("Could not find Journal");
+
+            JournalLockStatus status = new JournalLockStatus
+            {
+                JournalId = JournalId ?? Guid.Empty,
+                IsLocked = isLocked ?? false
+            };
+
+            return ServiceResult<JournalLockStatus>.SuccessResult(status);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<JournalLockStatus>.FailureResult($"Failed to get lock status: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Unlock a locked journal.
+    /// </summary>
+    /// <param name="JournalId">JournalId needed to be unlocked</param>
+    /// <param name="password">Password provided by user</param>
+    /// <returns>A <see cref="ServiceResult{JournalUnlockResponse}"/> containing a <see cref="JournalUnlockResponse"/> indicating whether the journal was successfully unlocked, including failure details if the operation did not succeed.</returns>
+    public async Task<ServiceResult<JournalUnlockResponse>> UnlockJournal(Guid JournalId, string password)
+    {
+        try
+        {
+            var currentUser = _authService.GetCurrentUser();
+            if (currentUser == null)
+            {
+                return ServiceResult<JournalUnlockResponse>.FailureResult("User not authenticated");
+            }
+
+            // Get the journal
+            var journal = await _context.Journals
+                .Where(j => j.Id == JournalId && j.CreatedBy == currentUser.Id)
+                .FirstOrDefaultAsync();
+
+            if (journal == null)
+            {
+                return ServiceResult<JournalUnlockResponse>.FailureResult("Journal not found");
+            }
+
+            // Check if journal is actually locked
+            if (!journal.IsLocked)
+            {
+                return ServiceResult<JournalUnlockResponse>.SuccessResult(new JournalUnlockResponse
+                {
+                    JournalId = JournalId,
+                    HasUnlocked = true,
+                    Message = "Journal is not locked"
+                });
+            }
+
+            // Verify password
+            bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(password, journal.Password);
+
+            if (!isPasswordCorrect)
+            {
+                return ServiceResult<JournalUnlockResponse>.FailureResult("Incorrect password");
+            }
+
+            var response = new JournalUnlockResponse
+            {
+                JournalId = JournalId,
+                HasUnlocked = true,
+                Message = "Journal unlocked successfully"
+            };
+
+            return ServiceResult<JournalUnlockResponse>.SuccessResult(response);
+        }
+        catch (Exception ex)
+        {
+            _loggerService.LogError($"Failed to unlock journal: {ex.Message}");
+            return ServiceResult<JournalUnlockResponse>.FailureResult($"Failed to unlock journal: {ex.Message}");
         }
     }
 

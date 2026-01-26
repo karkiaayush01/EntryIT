@@ -1,6 +1,5 @@
-* {
-    box-sizing: border-box;
-}
+/* Modal.razor.css */
+/* Styles for the reusable Modal component */
 
 .modal-overlay {
     position: fixed;
@@ -47,6 +46,36 @@
     justify-content: space-between;
     padding: 20px 24px;
     border-bottom: 1px solid #e5e5e5;
+}
+
+.theme-dark .modal-header {
+    border-bottom-color: #2b2b2b;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.theme-dark .modal-title {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-message {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.theme-dark .modal-message {
+    color: #ccc;
 }
 
 .modal-extra-text {
