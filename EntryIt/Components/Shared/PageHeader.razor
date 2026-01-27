@@ -1,16 +1,83 @@
-﻿<div class="page-header">
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="page-header">
     <h1 class="page-title">@PageTitle</h1>
     <div class="header-actions">
         <div class="streak-counter">
             <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
             <span class="streak-number">@CurrentStreak</span>
         </div>
-        <div class="user-avatar">@CommonUtils.GetInitials(FullName)</div>
+        <div class="user-avatar-wrapper">
+            <div class="user-avatar" @onclick="ToggleUserMenu">@CommonUtils.GetInitials(FullName)</div>
+
+            @if (showUserMenu)
+            {
+                <div class="user-menu-overlay" @onclick="CloseUserMenu"></div>
+                <div class="user-menu bg-dialog" @onclick:stopPropagation>
+                    <div class="user-menu-header">
+                        <div class="user-menu-avatar">@CommonUtils.GetInitials(FullName)</div>
+                        <div class="user-menu-info">
+                            <span class="user-menu-name">@FullName</span>
+                        </div>
+                    </div>
+                    <div class="user-menu-divider"></div>
+                    <button class="user-menu-item logout-item" @onclick="ShowLogoutConfirm">
+                        <img src="assets/icons/log-out.svg" alt="Logout" class="menu-icon" />
+                        <span>Logout</span>
+                    </button>
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+<ConfirmModal
+    IsOpen="@showLogoutModal"
+    Variant="ModalVariant.Warning"
+    Title="Logout"
+    Message="Are you sure you want to logout?"
+    ConfirmText="Logout"
+    CloseOnOverlayClick="true"
+    OnConfirm="HandleLogout"
+    OnCancel="() => showLogoutModal = false"
+    OnClose="() => showLogoutModal = false"
+/>
 
 @code {
     [Parameter] public string PageTitle { get; set; } = string.Empty;
     [Parameter] public int CurrentStreak { get; set; }
     [Parameter] public string FullName { get; set; } = string.Empty;
+
+    private bool showUserMenu = false;
+    private bool showLogoutModal = false;
+
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+    }
+
+    private void CloseUserMenu()
+    {
+        showUserMenu = false;
+    }
+
+    private void ShowLogoutConfirm()
+    {
+        showUserMenu = false;
+        showLogoutModal = true;
+    }
+
+    private async Task HandleLogout()
+    {
+        showLogoutModal = false;
+
+        var result = await AuthService.Logout();
+
+        if (result.Success)
+        {
+            // Navigate to login and clear all navigation history
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+    }
 }

@@ -193,6 +193,7 @@ public class AuthService : IAuthService
         {
             await Task.Delay(1000);
             CurrentUser = null;
+            NotifyStateChanged();
             return ServiceResult<object?>.SuccessResult(null);
         }
         catch(Exception ex)

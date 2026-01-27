@@ -97,8 +97,17 @@
                 </div>
             </div>
 
-            @* Streak Calendar *@
-            <div class="calendar-section">
+            @* Tag Distribution and Calendar Side by Side *@
+            <div class="bottom-section">
+                <div class="chart-container">
+                    <h3 class="chart-title">Tag Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="tagChart"></canvas>
+                    </div>
+                </div>
+
+                @* Streak Calendar *@
+                <div class="calendar-section">
                 <div class="calendar-header">
                     <h3 class="calendar-title">Streak Calendar</h3>
                     <div class="month-selector">
@@ -137,6 +146,7 @@
                         }
                     </div>
                 </div>
+                </div>
             </div>
         }
     </div>
@@ -153,6 +163,7 @@
     private List<MoodDistribution> MoodDistributions = [];
     private List<WordCountDistributions> WordCountData = [];
     private List<StreakRecord> StreakRecords = [];
+    private List<TagDistribution> TagDistributions = [];
     private MoodViewModel? MostUsedMood;
     private int AverageWordCount = 0;
     private DateTime FromDate = DateTime.Now.AddDays(-30).Date;
@@ -211,6 +222,13 @@
             {
                 StreakRecords = streakResult.Data;
             }
+
+            // Fetch tag distribution
+            var tagResult = await DashboardService.GetTagDistribution(filters);
+            if (tagResult.Success && tagResult.Data != null)
+            {
+                TagDistributions = tagResult.Data;
+            }
         }
         catch (Exception ex)
         {
@@ -245,6 +263,12 @@
             var wordCounts = WordCountData.Select(w => w.WordCount).ToArray();
 
             await JS.InvokeVoidAsync("renderWordCountChart", dates, wordCounts);
+
+            // Tag Distribution Chart Data
+            var tagLabels = TagDistributions.Select(t => t.TagName).ToArray();
+            var tagCounts = TagDistributions.Select(t => t.Count).ToArray();
+
+            await JS.InvokeVoidAsync("renderTagChart", tagLabels, tagCounts);
         }
         catch (Exception ex)
         {

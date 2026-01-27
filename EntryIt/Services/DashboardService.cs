@@ -207,4 +207,57 @@ public class DashboardService : IDashboardService
             return ServiceResult<List<StreakRecord>>.FailureResult($"Failed to get current month streak: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Gets the distribution of tags used in journals within the specified date range.
+    /// </summary>
+    /// <param name="filters">Filter criteria containing FromDate and ToDate for the date range.</param>
+    /// <returns>A <see cref="ServiceResult{T}"/> containing a list of tag distributions with counts.</returns>
+    public async Task<ServiceResult<List<TagDistribution>>> GetTagDistribution(FilterDates filters)
+    {
+        try
+        {
+            var currentUser = _authService.GetCurrentUser();
+            if (currentUser == null)
+            {
+                return ServiceResult<List<TagDistribution>>.FailureResult("User not authenticated");
+            }
+
+            // Build query for journals within date range
+            IQueryable<Journal> journalQuery = _context.Journals
+                .Where(j => j.CreatedBy == currentUser.Id);
+
+            // Apply date filters
+            if (filters.FromDate.HasValue)
+            {
+                journalQuery = journalQuery.Where(j => j.SaveDate >= filters.FromDate.Value.Date);
+            }
+
+            journalQuery = journalQuery.Where(j => j.SaveDate <= filters.ToDate.Date);
+
+            // Get journal IDs in date range
+            var journalIds = await journalQuery.Select(j => j.Id).ToListAsync();
+
+            // Get tag distribution
+            var tagDistribution = await (
+                from jt in _context.Journal_Tags
+                join t in _context.Tags on jt.TagId equals t.Id
+                where journalIds.Contains(jt.JournalId)
+                group t by new { t.Id, t.Name } into g
+                orderby g.Count() descending
+                select new TagDistribution
+                {
+                    TagName = g.Key.Name,
+                    Count = g.Count()
+                }
+            ).ToListAsync();
+
+            return ServiceResult<List<TagDistribution>>.SuccessResult(tagDistribution);
+        }
+        catch (Exception ex)
+        {
+            _loggerService.LogError($"Failed to get tag distribution: {ex.Message}");
+            return ServiceResult<List<TagDistribution>>.FailureResult($"Failed to get tag distribution: {ex.Message}");
+        }
+    }
 }

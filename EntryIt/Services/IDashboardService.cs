@@ -10,4 +10,6 @@ public interface IDashboardService
     Task<ServiceResult<List<WordCountDistributions>>> GetWordCountDistributions(FilterDates filters);
 
     Task<ServiceResult<List<StreakRecord>>> GetCurrentMonthStreak(int month);
+
+    Task<ServiceResult<List<TagDistribution>>> GetTagDistribution(FilterDates filters);
 }

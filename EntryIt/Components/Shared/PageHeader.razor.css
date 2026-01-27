@@ -41,6 +41,10 @@
 }
 
 /* User Avatar */
+.user-avatar-wrapper {
+    position: relative;
+}
+
 .user-avatar {
     width: 2.5rem;
     height: 2.5rem;
@@ -52,4 +56,128 @@
     font-weight: 600;
     color: white;
     font-size: 0.875rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .user-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+/* User Menu Dropdown */
+.user-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+}
+
+.user-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+}
+
+.theme-dark .user-menu {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.user-menu-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gradient_bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 14px;
+}
+
+.user-menu-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-menu-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.user-menu-divider {
+    height: 1px;
+    background: #e5e5e5;
+    margin: 0;
+}
+
+.theme-dark .user-menu-divider {
+    background: #2b2b2b;
+}
+
+.user-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+    .user-menu-item:hover {
+        background: var(--hover-bg);
+    }
+
+    .user-menu-item.logout-item {
+        color: #ef4444;
+    }
+
+        .user-menu-item.logout-item:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+.menu-icon {
+    width: 18px;
+    height: 18px;
+    filter: invert(50%) sepia(100%) saturate(2000%) hue-rotate(340deg);
+}
+
+.theme-dark .menu-icon {
+    filter: invert(50%) sepia(100%) saturate(2000%) hue-rotate(340deg) brightness(1.2);
 }

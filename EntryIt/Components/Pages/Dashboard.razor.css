@@ -106,7 +106,15 @@
 /* Charts Section */
 .charts-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* Bottom Section - Tag Distribution and Calendar Side by Side */
+.bottom-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
     margin-bottom: 32px;
 }
@@ -305,6 +313,10 @@
     }
 
     .charts-section {
+        grid-template-columns: 1fr;
+    }
+
+    .bottom-section {
         grid-template-columns: 1fr;
     }
 

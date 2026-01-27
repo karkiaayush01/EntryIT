@@ -36,17 +36,11 @@
         OnClose="() => SetIsDeleteModalOpen(false)"
     />
 
-
-    <div class="home-header">
-        <h1 class="page-title">Home</h1>
-        <div class="header-actions">
-            <div class="streak-counter">
-                <img src="assets/icons/fire.svg" alt="Streak" class="fire-icon" />
-                <span class="streak-number">@currentUser?.CurrentStreak</span>
-            </div>
-            <div class="user-avatar">@CommonUtils.GetInitials(currentUser?.FullName ?? "")</div>
-        </div>
-    </div>
+    <PageHeader
+        PageTitle="Home"
+        CurrentStreak="@(currentUser?.CurrentStreak ?? 0)"
+        FullName="@(currentUser?.FullName ?? string.Empty)" 
+    />
 
     <div class="home-content">
         <div class="journal-section">
