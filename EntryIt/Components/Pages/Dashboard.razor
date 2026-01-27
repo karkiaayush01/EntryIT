@@ -1,0 +1,332 @@
+@* Dashboard.razor *@
+
+@page "/analytics"
+
+@inject IAuthService AuthService
+@inject IDashboardService DashboardService
+@inject ILoggerService LoggerService
+@inject ThemeService ThemeService
+@inject ToastService Toast
+@inject IJSRuntime JS
+
+<div class="dashboard-container">
+    <PageHeader
+        PageTitle="Analytics"
+        CurrentStreak="@(CurrentUser?.CurrentStreak ?? 0)"
+        FullName="@(CurrentUser?.FullName ?? string.Empty)"
+    />
+
+    <div class="dashboard-content">
+        @if (IsLoading)
+        {
+            <div class="loading-container">
+                <p>Loading analytics...</p>
+            </div>
+        }
+        else
+        {
+            @* Stats Cards *@
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #FFA500;">
+                        <img src="assets/icons/fire.svg" alt="Current Streak" class="card-icon" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-value">@CurrentUser?.CurrentStreak <span class="stat-unit">Days</span></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #FFD700;">
+                        <img src="assets/icons/trophy.svg" alt="Longest Streak" class="card-icon" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Longest Streak</div>
+                        <div class="stat-value">@CurrentUser?.LongestStreak <span class="stat-unit">Days</span></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--primary);">
+                        <span style="font-size: 24px; color: white;">ab</span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Average Word Count</div>
+                        <div class="stat-value">@AverageWordCount <span class="stat-unit">Words</span></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--primary);">
+                        @if (MostUsedMood != null)
+                        {
+                            <span style="font-size: 28px;">@MostUsedMood.Emoji</span>
+                        }
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Most Used Mood</div>
+                        <div class="stat-value mood-name">@(MostUsedMood?.Name ?? "N/A")</div>
+                    </div>
+                </div>
+            </div>
+
+            @* Charts Section *@
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3 class="chart-title">Mood Distributions</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="moodChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Word Count Distributions</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="wordCountChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            @* Streak Calendar *@
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <h3 class="calendar-title">Streak Calendar</h3>
+                    <div class="month-selector">
+                        <button class="month-nav-btn" @onclick="PreviousMonth">
+                            <img src="assets/icons/chevron-left.svg" alt="Previous" />
+                        </button>
+                        <span class="current-month">@GetMonthYearDisplay()</span>
+                        <button class="month-nav-btn" @onclick="NextMonth">
+                            <img src="assets/icons/chevron-right.svg" alt="Next" />
+                        </button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="calendar-weekdays">
+                        @foreach (var day in new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" })
+                        {
+                            <div class="weekday-label">@day</div>
+                        }
+                    </div>
+                    <div class="calendar-days">
+                        @foreach (var day in GetCalendarDays())
+                        {
+                            <div class=@($"calendar-day {GetDayClass(day)}")>
+                                @if (day.HasValue)
+                                {
+                                    <span>@day.Value.Day</span>
+                                    @if (HasActivity(day.Value))
+                                    {
+                                        <div class="activity-indicator">
+                                            <img src="assets/icons/fire.svg" alt="Activity" class="fire-small" />
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code{
+
+    private UserViewModel? CurrentUser { get; set; }
+    private bool IsLoading = true;
+    private int SelectedMonth = DateTime.Now.Month;
+    private int SelectedYear = DateTime.Now.Year;
+    private List<MoodDistribution> MoodDistributions = [];
+    private List<WordCountDistributions> WordCountData = [];
+    private List<StreakRecord> StreakRecords = [];
+    private MoodViewModel? MostUsedMood;
+    private int AverageWordCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = AuthService.GetCurrentUser();
+        ThemeService.OnChange += HandleThemeChanged;
+        await LoadDashboardData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !IsLoading)
+        {
+            await RenderCharts();
+        }
+    }
+
+    private async Task LoadDashboardData()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Create date filter for last 30 days
+            var filters = new FilterDates
+            {
+                FromDate = DateTime.Now.AddDays(-30).Date,
+                ToDate = DateTime.Now.Date
+            };
+
+            // Fetch mood distribution
+            var moodResult = await DashboardService.GetMoodDistribution(filters);
+            if (moodResult.Success && moodResult.Data != null)
+            {
+                MoodDistributions = moodResult.Data;
+                MostUsedMood = MoodDistributions.FirstOrDefault()?.Mood;
+            }
+
+            // Fetch word count distribution
+            var wordCountResult = await DashboardService.GetWordCountDistributions(filters);
+            if (wordCountResult.Success && wordCountResult.Data != null)
+            {
+                WordCountData = wordCountResult.Data;
+                AverageWordCount = WordCountData.Any() 
+                    ? (int)WordCountData.Average(w => w.WordCount) 
+                    : 0;
+            }
+
+            // Fetch streak records for current month
+            var streakResult = await DashboardService.GetCurrentMonthStreak(SelectedMonth);
+            if (streakResult.Success && streakResult.Data != null)
+            {
+                StreakRecords = streakResult.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggerService.LogError($"Failed to load dashboard data: {ex.Message}");
+            Toast.Error("Failed to load analytics data");
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task RenderCharts()
+    {
+        try
+        {
+            // Mood Chart Data
+            var moodLabels = MoodDistributions.Select(m => m.Mood.Emoji + " " + m.Mood.Name).ToArray();
+            var moodCounts = MoodDistributions.Select(m => m.MoodCount).ToArray();
+
+            await JS.InvokeVoidAsync("renderMoodChart", moodLabels, moodCounts);
+
+            // Word Count Chart Data
+            var dates = WordCountData.Select(w => w.Date.ToString("MMM dd")).ToArray();
+            var wordCounts = WordCountData.Select(w => w.WordCount).ToArray();
+
+            await JS.InvokeVoidAsync("renderWordCountChart", dates, wordCounts);
+        }
+        catch (Exception ex)
+        {
+            LoggerService.LogError($"Failed to render charts: {ex.Message}");
+        }
+    }
+
+    private async Task PreviousMonth()
+    {
+        if (SelectedMonth == 1)
+        {
+            SelectedMonth = 12;
+            SelectedYear--;
+        }
+        else
+        {
+            SelectedMonth--;
+        }
+
+        var streakResult = await DashboardService.GetCurrentMonthStreak(SelectedMonth);
+        if (streakResult.Success && streakResult.Data != null)
+        {
+            StreakRecords = streakResult.Data;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task NextMonth()
+    {
+        if (SelectedMonth == 12)
+        {
+            SelectedMonth = 1;
+            SelectedYear++;
+        }
+        else
+        {
+            SelectedMonth++;
+        }
+
+        var streakResult = await DashboardService.GetCurrentMonthStreak(SelectedMonth);
+        if (streakResult.Success && streakResult.Data != null)
+        {
+            StreakRecords = streakResult.Data;
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetMonthYearDisplay()
+    {
+        return new DateTime(SelectedYear, SelectedMonth, 1).ToString("MMM, yyyy");
+    }
+
+    private List<DateTime?> GetCalendarDays()
+    {
+        var firstDay = new DateTime(SelectedYear, SelectedMonth, 1);
+        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var startDayOfWeek = (int)firstDay.DayOfWeek;
+
+        var days = new List<DateTime?>();
+
+        // Add empty days for alignment
+        for (int i = 0; i < startDayOfWeek; i++)
+        {
+            days.Add(null);
+        }
+
+        // Add actual days
+        for (int day = 1; day <= lastDay.Day; day++)
+        {
+            days.Add(new DateTime(SelectedYear, SelectedMonth, day));
+        }
+
+        return days;
+    }
+
+    private string GetDayClass(DateTime? day)
+    {
+        if (!day.HasValue) return "empty";
+
+        var today = DateTime.Now.Date;
+        if (day.Value.Date == today) return "today";
+        if (day.Value.Date > today) return "future";
+
+        return HasActivity(day.Value) ? "has-activity" : "";
+    }
+
+    private bool HasActivity(DateTime date)
+    {
+        return StreakRecords.Any(sr => sr.ActivityDate.Date == date.Date);
+    }
+
+    private async void HandleThemeChanged()
+    {
+        // Wait for DOM to update with new theme class
+        StateHasChanged();
+        await Task.Delay(100);
+        await RenderCharts();
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= HandleThemeChanged;
+    }
+}

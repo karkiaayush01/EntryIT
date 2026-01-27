@@ -31,6 +31,7 @@ namespace EntryIt
             builder.Services.AddScoped<IMoodService, MoodService>();
             builder.Services.AddScoped<ITagService, TagService>();
             builder.Services.AddScoped<IStreakService, StreakService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
     		builder.Logging.AddDebug();
 #endif
             var app = builder.Build();
