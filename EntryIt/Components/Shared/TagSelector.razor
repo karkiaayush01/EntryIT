@@ -92,6 +92,11 @@
     private HashSet<Guid> selectedTagIds = new();
     private string CustomTagName { get; set; } = string.Empty;
 
+    protected override void OnParametersSet()
+    {
+        selectedTagIds = SelectedTags.Select(t => t.Id).ToHashSet();
+    }
+
     private Dictionary<string, List<Tag>> GetGroupedTags()
     {
         return Tags

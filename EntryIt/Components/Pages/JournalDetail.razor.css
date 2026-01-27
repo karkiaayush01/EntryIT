@@ -30,6 +30,14 @@
     margin: 0 auto;
 }
 
+/* Journal Actions */
+.journal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
 /* Back Button */
 .back-button {
     display: flex;
@@ -42,7 +50,6 @@
     font-weight: 500;
     cursor: pointer;
     padding: 8px 0;
-    margin-bottom: 24px;
     transition: opacity 0.2s ease;
 }
 

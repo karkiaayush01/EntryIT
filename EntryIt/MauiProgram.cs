@@ -2,6 +2,7 @@
 using EntryIt.Data;
 using Microsoft.Extensions.Logging;
 using Blazor.Sonner.Extensions;
+using QuestPDF.Infrastructure;
 
 namespace EntryIt
 {
@@ -9,6 +10,9 @@ namespace EntryIt
     {
         public static MauiApp CreateMauiApp()
         {
+            // Configure QuestPDF license for PDF export functionality
+            QuestPDF.Settings.License = LicenseType.Community;
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()

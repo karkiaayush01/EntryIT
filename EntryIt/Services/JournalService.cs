@@ -4,6 +4,10 @@ using EntryIt.Entities;
 using Microsoft.EntityFrameworkCore;
 using EntryIt.Utils;
 using EntryIt.Models;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
+using QuestPDF.Helpers;
+using PdfColors = QuestPDF.Helpers.Colors;
 namespace EntryIt.Services;
 
 public  class JournalService: IJournalService
@@ -591,6 +595,316 @@ public  class JournalService: IJournalService
             _loggerService.LogError($"Failed to unlock journal: {ex.Message}");
             return ServiceResult<JournalUnlockResponse>.FailureResult($"Failed to unlock journal: {ex.Message}");
         }
+    }
+
+    public async Task<ServiceResult<byte[]>> ExportJournalToPdf(Guid journalId)
+    {
+        try
+        {
+            var currentUser = _authService.GetCurrentUser();
+            if (currentUser == null)
+            {
+                return ServiceResult<byte[]>.FailureResult("User not authenticated");
+            }
+
+            // Get the journal
+            var journal = await _context.Journals
+                .FirstOrDefaultAsync(j => j.Id == journalId && j.CreatedBy == currentUser.Id);
+
+            if (journal == null)
+            {
+                return ServiceResult<byte[]>.FailureResult("Journal not found");
+            }
+
+            // Get tags for this journal
+            var tags = await (
+                from t in _context.Tags
+                join jt in _context.Journal_Tags on t.Id equals jt.TagId
+                where jt.JournalId == journal.Id
+                select t
+            ).ToListAsync();
+
+            // Get moods
+            var primaryMood = await _context.Moods.FirstOrDefaultAsync(m => m.Id == journal.PrimaryMood);
+            var secondaryMood1 = journal.SecondaryMood1 != Guid.Empty
+                ? await _context.Moods.FirstOrDefaultAsync(m => m.Id == journal.SecondaryMood1)
+                : null;
+            var secondaryMood2 = journal.SecondaryMood2 != Guid.Empty
+                ? await _context.Moods.FirstOrDefaultAsync(m => m.Id == journal.SecondaryMood2)
+                : null;
+
+            // Generate PDF
+            var pdfBytes = GenerateSingleJournalPdf(journal, tags, primaryMood, secondaryMood1, secondaryMood2, currentUser);
+
+            return ServiceResult<byte[]>.SuccessResult(pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            _loggerService.LogError($"Failed to export journal to PDF: {ex.Message}");
+            return ServiceResult<byte[]>.FailureResult($"Failed to export journal: {ex.Message}");
+        }
+    }
+
+    public async Task<ServiceResult<byte[]>> ExportJournalsByDateRange(DateTime fromDate, DateTime toDate)
+    {
+        try
+        {
+            var currentUser = _authService.GetCurrentUser();
+            if (currentUser == null)
+            {
+                return ServiceResult<byte[]>.FailureResult("User not authenticated");
+            }
+
+            // Get journals in date range
+            var journals = await _context.Journals
+                .Where(j => j.CreatedBy == currentUser.Id &&
+                           j.SaveDate >= fromDate.Date &&
+                           j.SaveDate <= toDate.Date)
+                .OrderByDescending(j => j.SaveDate)
+                .ToListAsync();
+
+            if (!journals.Any())
+            {
+                return ServiceResult<byte[]>.FailureResult("No journals found in the specified date range");
+            }
+
+            // Get all journal IDs for batch tag fetching
+            var journalIds = journals.Select(j => j.Id).ToList();
+
+            // Batch fetch all tags for all journals
+            var allJournalTags = await (
+                from jt in _context.Journal_Tags
+                join t in _context.Tags on jt.TagId equals t.Id
+                where journalIds.Contains(jt.JournalId)
+                select new { jt.JournalId, Tag = t }
+            ).ToListAsync();
+
+            var journalTagsDict = allJournalTags
+                .GroupBy(x => x.JournalId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.Tag).ToList());
+
+            // Get all unique mood IDs
+            var moodIds = journals
+                .SelectMany(j => new[] { j.PrimaryMood, j.SecondaryMood1, j.SecondaryMood2 })
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            // Batch fetch all moods
+            var moods = await _context.Moods
+                .Where(m => moodIds.Contains(m.Id))
+                .ToDictionaryAsync(m => m.Id);
+
+            // Generate PDF
+            var pdfBytes = GenerateMultipleJournalsPdf(journals, journalTagsDict, moods, currentUser, fromDate, toDate);
+
+            return ServiceResult<byte[]>.SuccessResult(pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            _loggerService.LogError($"Failed to export journals to PDF: {ex.Message}");
+            return ServiceResult<byte[]>.FailureResult($"Failed to export journals: {ex.Message}");
+        }
+    }
+
+    private byte[] GenerateSingleJournalPdf(Journal journal, List<Tag> tags, Mood? primaryMood, Mood? secondaryMood1, Mood? secondaryMood2, UserViewModel user)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(PdfColors.White);
+                page.DefaultTextStyle(x => x.FontSize(11).FontColor(PdfColors.Black));
+
+                page.Header()
+                    .AlignCenter()
+                    .Text("EntryIt Journal Export")
+                    .FontSize(20)
+                    .Bold()
+                    .FontColor(PdfColors.Blue.Medium);
+
+                page.Content()
+                    .PaddingVertical(1, Unit.Centimetre)
+                    .Column(column =>
+                    {
+                        column.Spacing(15);
+
+                        // Title
+                        column.Item().Text(journal.Title)
+                            .FontSize(18)
+                            .Bold()
+                            .FontColor(PdfColors.Grey.Darken4);
+
+                        // Metadata section
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().Text($"Date: {journal.SaveDate:dd MMM yyyy}").FontSize(10).FontColor(PdfColors.Grey.Darken2);
+                                col.Item().Text($"Word Count: {journal.WordCount}").FontSize(10).FontColor(PdfColors.Grey.Darken2);
+                                col.Item().Text($"Last Updated: {journal.LastUpdatedAt:dd MMM yyyy HH:mm}").FontSize(10).FontColor(PdfColors.Grey.Darken2);
+                            });
+                        });
+
+                        // Moods
+                        if (primaryMood != null)
+                        {
+                            column.Item().Text($"Primary Mood: {primaryMood.Emoji} {primaryMood.Name}")
+                                .FontSize(10);
+
+                            if (secondaryMood1 != null || secondaryMood2 != null)
+                            {
+                                var moods = new List<string>();
+                                if (secondaryMood1 != null) moods.Add($"{secondaryMood1.Emoji} {secondaryMood1.Name}");
+                                if (secondaryMood2 != null) moods.Add($"{secondaryMood2.Emoji} {secondaryMood2.Name}");
+
+                                column.Item().Text($"Secondary Moods: {string.Join(", ", moods)}")
+                                    .FontSize(10);
+                            }
+                        }
+
+                        // Tags
+                        if (tags != null && tags.Any())
+                        {
+                            column.Item().Text($"Tags: {string.Join(", ", tags.Select(t => t.Name))}")
+                                .FontSize(10)
+                                .FontColor(PdfColors.Blue.Darken1);
+                        }
+
+                        // Divider
+                        column.Item().PaddingTop(10).LineHorizontal(1).LineColor(PdfColors.Grey.Lighten2);
+
+                        // Content (plain text version)
+                        column.Item().PaddingTop(10).Text(journal.ContentRaw)
+                            .FontSize(11)
+                            .LineHeight(1.5f);
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text($"Generated by EntryIt - {DateTime.Now:dd MMM yyyy HH:mm}")
+                    .FontSize(8)
+                    .FontColor(PdfColors.Grey.Medium);
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+
+    private byte[] GenerateMultipleJournalsPdf(List<Journal> journals, Dictionary<Guid, List<Tag>> journalTagsDict, Dictionary<Guid, Mood> moods, UserViewModel user, DateTime fromDate, DateTime toDate)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(PdfColors.White);
+                page.DefaultTextStyle(x => x.FontSize(11).FontColor(PdfColors.Black));
+
+                page.Header()
+                    .Column(column =>
+                    {
+                        column.Item().AlignCenter().Text("EntryIt Journal Export")
+                            .FontSize(20)
+                            .Bold()
+                            .FontColor(PdfColors.Blue.Medium);
+
+                        column.Item().AlignCenter().Text($"{fromDate:dd MMM yyyy} - {toDate:dd MMM yyyy}")
+                            .FontSize(12)
+                            .FontColor(PdfColors.Grey.Darken2);
+
+                        column.Item().AlignCenter().Text($"{journals.Count} {(journals.Count == 1 ? "Entry" : "Entries")}")
+                            .FontSize(10)
+                            .FontColor(PdfColors.Grey.Medium);
+                    });
+
+                page.Content()
+                    .PaddingVertical(1, Unit.Centimetre)
+                    .Column(column =>
+                    {
+                        foreach (var journal in journals)
+                        {
+                            column.Item().PageBreak();
+                            column.Item().PaddingBottom(20).Column(journalColumn =>
+                            {
+                                // Title
+                                journalColumn.Item().Text(journal.Title)
+                                    .FontSize(16)
+                                    .Bold()
+                                    .FontColor(PdfColors.Grey.Darken4);
+
+                                // Date and metadata
+                                journalColumn.Item().PaddingTop(5).Text($"Date: {journal.SaveDate:dd MMM yyyy}")
+                                    .FontSize(10)
+                                    .FontColor(PdfColors.Grey.Darken2);
+
+                                journalColumn.Item().Text($"Word Count: {journal.WordCount}")
+                                    .FontSize(10)
+                                    .FontColor(PdfColors.Grey.Darken2);
+
+                                // Moods
+                                var primaryMood = moods.GetValueOrDefault(journal.PrimaryMood);
+                                if (primaryMood != null)
+                                {
+                                    journalColumn.Item().PaddingTop(5).Text($"Primary Mood: {primaryMood.Emoji} {primaryMood.Name}")
+                                        .FontSize(10);
+
+                                    var secondaryMood1 = journal.SecondaryMood1 != Guid.Empty ? moods.GetValueOrDefault(journal.SecondaryMood1) : null;
+                                    var secondaryMood2 = journal.SecondaryMood2 != Guid.Empty ? moods.GetValueOrDefault(journal.SecondaryMood2) : null;
+
+                                    if (secondaryMood1 != null || secondaryMood2 != null)
+                                    {
+                                        var moodsList = new List<string>();
+                                        if (secondaryMood1 != null) moodsList.Add($"{secondaryMood1.Emoji} {secondaryMood1.Name}");
+                                        if (secondaryMood2 != null) moodsList.Add($"{secondaryMood2.Emoji} {secondaryMood2.Name}");
+
+                                        journalColumn.Item().Text($"Secondary Moods: {string.Join(", ", moodsList)}")
+                                            .FontSize(10);
+                                    }
+                                }
+
+                                // Tags
+                                var tags = journalTagsDict.GetValueOrDefault(journal.Id, new List<Tag>());
+                                if (tags.Any())
+                                {
+                                    journalColumn.Item().Text($"Tags: {string.Join(", ", tags.Select(t => t.Name))}")
+                                        .FontSize(10)
+                                        .FontColor(PdfColors.Blue.Darken1);
+                                }
+
+                                // Divider
+                                journalColumn.Item().PaddingTop(10).LineHorizontal(1).LineColor(PdfColors.Grey.Lighten2);
+
+                                // Content
+                                journalColumn.Item().PaddingTop(10).Text(journal.ContentRaw)
+                                    .FontSize(11)
+                                    .LineHeight(1.5f);
+
+                                // Bottom divider
+                                journalColumn.Item().PaddingTop(15).LineHorizontal(2).LineColor(PdfColors.Grey.Lighten1);
+                            });
+                        }
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .DefaultTextStyle(x => x.FontSize(8).FontColor(PdfColors.Grey.Medium))
+                    .Text(text =>
+                    {
+                        text.Span("Generated by EntryIt - ");
+                        text.Span(DateTime.Now.ToString("dd MMM yyyy HH:mm"));
+                        text.Span(" | Page ");
+                        text.CurrentPageNumber();
+                        text.Span(" of ");
+                        text.TotalPages();
+                    });
+            });
+        });
+
+        return document.GeneratePdf();
     }
 
     /// <summary>

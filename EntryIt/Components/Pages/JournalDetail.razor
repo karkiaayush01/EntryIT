@@ -7,6 +7,7 @@
 @inject ILoggerService LoggerService
 @inject ToastService Toast
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="journal-detail-container">
     <PageHeader
@@ -24,10 +25,22 @@
     else if (JournalData != null)
     {
         <div class="journal-detail-content">
-            <button class="back-button" @onclick="NavigateBack">
-                <img src="assets/icons/chevron-left.svg" alt="Back" class="back-icon" />
-                Back to Journals
-            </button>
+            <div class="journal-actions">
+                <button class="back-button" @onclick="NavigateBack">
+                    <img src="assets/icons/chevron-left.svg" alt="Back" class="back-icon" />
+                    Back to Journals
+                </button>
+
+                <Button
+                    Text="@(IsExporting ? "Exporting..." : "Export PDF")"
+                    Variant="ButtonVariant.Primary"
+                    Icon="download"
+                    OnClick="HandleExportJournal"
+                    Disabled="@IsExporting"
+                    Style="padding: 8px 16px;"
+                    ZoomEffect="true"
+                />
+            </div>
 
             <div class="journal-header">
                 <h1 class="journal-title text-primary">@JournalData.Title</h1>
@@ -162,6 +175,7 @@
     private bool IsUnlocking = false;
     private string UnlockPassword = string.Empty;
     private string UnlockError = string.Empty;
+    private bool IsExporting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -327,5 +341,47 @@
     private void NavigateBack()
     {
         Navigation.NavigateTo("/journal");
+    }
+
+    private async Task HandleExportJournal()
+    {
+        if (IsExporting || JournalData == null) return;
+
+        IsExporting = true;
+        StateHasChanged();
+
+        try
+        {
+            Toast.Info("Generating PDF...");
+
+            var result = await JournalService.ExportJournalToPdf(JournalId);
+
+            if (result.Success && result.Data != null)
+            {
+                // Convert byte array to base64 and trigger download
+                var base64 = Convert.ToBase64String(result.Data);
+                var fileName = $"EntryIt_{JournalData.Title}_{JournalData.SaveDate:yyyyMMdd}.pdf";
+
+                // Sanitize filename
+                fileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
+
+                await JS.InvokeVoidAsync("downloadPdf", base64, fileName);
+                Toast.Success("PDF exported successfully!");
+            }
+            else
+            {
+                Toast.Error(result.ErrorMessage ?? "Failed to export journal");
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggerService.LogError($"Export failed: {ex.Message}");
+            Toast.Error("An error occurred while exporting");
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
+        }
     }
 }

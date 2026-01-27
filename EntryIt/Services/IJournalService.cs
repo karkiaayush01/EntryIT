@@ -46,5 +46,20 @@ public interface IJournalService
 
     Task<ServiceResult<JournalUnlockResponse>> UnlockJournal(Guid JournalId, string password);
 
+    /// <summary>
+    /// Export a single journal as PDF
+    /// </summary>
+    /// <param name="journalId">Journal ID to export</param>
+    /// <returns>PDF file as byte array</returns>
+    Task<ServiceResult<byte[]>> ExportJournalToPdf(Guid journalId);
+
+    /// <summary>
+    /// Export multiple journals by date range as a single PDF
+    /// </summary>
+    /// <param name="fromDate">Start date</param>
+    /// <param name="toDate">End date</param>
+    /// <returns>PDF file as byte array</returns>
+    Task<ServiceResult<byte[]>> ExportJournalsByDateRange(DateTime fromDate, DateTime toDate);
+
     public event Action? OnChange;
 }

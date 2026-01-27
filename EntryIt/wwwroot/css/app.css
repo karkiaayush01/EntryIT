@@ -137,7 +137,7 @@ html, body, .page {
     color: var(--text);
 }
 
-bg-theme {
+.bg-theme {
     background: var(--bg);
 }
 

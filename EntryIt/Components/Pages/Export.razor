@@ -1,0 +1,214 @@
+@* Export.razor *@
+@page "/export"
+
+@inject IAuthService AuthService
+@inject IJournalService JournalService
+@inject ILoggerService LoggerService
+@inject ToastService Toast
+@inject IJSRuntime JS
+
+<div class="export-container">
+    <PageHeader
+        PageTitle="Export Journals"
+        CurrentStreak="@(CurrentUser?.CurrentStreak ?? 0)"
+        FullName="@(CurrentUser?.FullName ?? string.Empty)"
+    />
+
+    <div class="export-content">
+        <div class="export-card bg-dialog">
+            <div class="export-header">
+                <img src="assets/icons/download.svg" alt="Export" class="export-icon" />
+                <h2 class="export-title">Export Journals to PDF</h2>
+                <p class="export-description">Select a date range to export your journal entries as a single PDF document</p>
+            </div>
+
+            <div class="export-form">
+                <div class="date-range-section">
+                    <div class="form-field">
+                        <label class="form-label">From Date</label>
+                        <input
+                            type="date"
+                            class="date-input bg-theme border-grey"
+                            value="@FromDate.ToString("yyyy-MM-dd")"
+                            @onchange="OnFromDateChange"
+                            max="@ToDate.ToString("yyyy-MM-dd")"
+                        />
+                    </div>
+
+                    <div class="date-separator">
+                        <span>to</span>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label">To Date</label>
+                        <input
+                            type="date"
+                            class="date-input bg-theme border-grey"
+                            value="@ToDate.ToString("yyyy-MM-dd")"
+                            @onchange="OnToDateChange"
+                            min="@FromDate.ToString("yyyy-MM-dd")"
+                            max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                        />
+                    </div>
+                </div>
+
+                <div class="date-info">
+                    <span class="info-text">
+                        Exporting journals from <strong>@FromDate.ToString("dd MMM yyyy")</strong> to <strong>@ToDate.ToString("dd MMM yyyy")</strong>
+                    </span>
+                </div>
+
+                <div class="quick-select-section">
+                    <span class="quick-select-label">Quick Select:</span>
+                    <div class="quick-select-buttons">
+                        <Button
+                            Text="Last 7 Days"
+                            Variant="ButtonVariant.Secondary"
+                            OnClick="() => SetQuickRange(7)"
+                            Style="padding: 8px 16px; font-size: 13px;"
+                        />
+                        <Button
+                            Text="Last 30 Days"
+                            Variant="ButtonVariant.Secondary"
+                            OnClick="() => SetQuickRange(30)"
+                            Style="padding: 8px 16px; font-size: 13px;"
+                        />
+                        <Button
+                            Text="Last 90 Days"
+                            Variant="ButtonVariant.Secondary"
+                            OnClick="() => SetQuickRange(90)"
+                            Style="padding: 8px 16px; font-size: 13px;"
+                        />
+                        <Button
+                            Text="This Year"
+                            Variant="ButtonVariant.Secondary"
+                            OnClick="SetThisYear"
+                            Style="padding: 8px 16px; font-size: 13px;"
+                        />
+                    </div>
+                </div>
+
+                <div class="export-actions">
+                    <Button
+                        Text="@(IsExporting ? "Generating PDF..." : "Export to PDF")"
+                        Variant="ButtonVariant.PrimaryGradient"
+                        Icon="download"
+                        OnClick="HandleExport"
+                        Disabled="@IsExporting"
+                        Style="width: 100%; padding: 12px; font-weight: 600;"
+                        ZoomEffect="true"
+                        Shadow="true"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div class="export-info-section">
+            <div class="info-card bg-dialog">
+                <h3 class="info-title">What's included in the PDF?</h3>
+                <ul class="info-list">
+                    <li>📝 Journal titles and content</li>
+                    <li>📅 Entry dates and timestamps</li>
+                    <li>😊 Mood information</li>
+                    <li>🏷️ Tags</li>
+                    <li>📊 Word counts</li>
+                </ul>
+            </div>
+
+            <div class="info-card bg-dialog">
+                <h3 class="info-title">Note</h3>
+                <p class="info-text">
+                    Locked journal entries will be included in the export only if you own them.
+                    The PDF will contain the plain text version of your entries for better compatibility.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private UserViewModel? CurrentUser { get; set; } = null;
+    private DateTime FromDate = DateTime.Now.AddDays(-30).Date;
+    private DateTime ToDate = DateTime.Now.Date;
+    private bool IsExporting = false;
+
+    protected override void OnInitialized()
+    {
+        CurrentUser = AuthService.GetCurrentUser();
+    }
+
+    private void OnFromDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
+        {
+            FromDate = date;
+            if (FromDate > ToDate)
+            {
+                ToDate = FromDate;
+            }
+        }
+    }
+
+    private void OnToDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
+        {
+            ToDate = date;
+            if (ToDate < FromDate)
+            {
+                FromDate = ToDate;
+            }
+        }
+    }
+
+    private void SetQuickRange(int days)
+    {
+        ToDate = DateTime.Now.Date;
+        FromDate = ToDate.AddDays(-days);
+    }
+
+    private void SetThisYear()
+    {
+        ToDate = DateTime.Now.Date;
+        FromDate = new DateTime(DateTime.Now.Year, 1, 1);
+    }
+
+    private async Task HandleExport()
+    {
+        if (IsExporting) return;
+
+        IsExporting = true;
+        StateHasChanged();
+
+        try
+        {
+            Toast.Info("Generating PDF...");
+
+            var result = await JournalService.ExportJournalsByDateRange(FromDate, ToDate);
+
+            if (result.Success && result.Data != null)
+            {
+                // Convert byte array to base64 and trigger download
+                var base64 = Convert.ToBase64String(result.Data);
+                var fileName = $"EntryIt_Journals_{FromDate:yyyyMMdd}_to_{ToDate:yyyyMMdd}.pdf";
+
+                await JS.InvokeVoidAsync("downloadPdf", base64, fileName);
+                Toast.Success("PDF exported successfully!");
+            }
+            else
+            {
+                Toast.Error(result.ErrorMessage ?? "Failed to export journals");
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggerService.LogError($"Export failed: {ex.Message}");
+            Toast.Error("An error occurred while exporting");
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
+        }
+    }
+}
