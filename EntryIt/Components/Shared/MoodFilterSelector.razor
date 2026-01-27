@@ -1,0 +1,129 @@
+@* MoodFilterSelector.razor - Multi-select mood filter component *@
+
+<div class="mood-filter-overlay" @onclick="Close">
+    <div class="mood-filter-container bg-dialog" @onclick:stopPropagation>
+        <div class="mood-filter-header">
+            <h3>Select Moods</h3>
+            <button type="button" class="btn-close" @onclick="Close">×</button>
+        </div>
+
+        <div class="mood-filter-content">
+            @foreach (var group in GetGroupedMoods())
+            {
+                <div class="mood-group">
+                    <div class="mood-group-header">
+                        <span class="mood-group-icon">@GetGroupIcon(group.Key)</span>
+                        <h4 class="mood-group-title">@group.Key</h4>
+                        <span class="mood-group-count">@group.Value.Count</span>
+                    </div>
+
+                    <div class="mood-grid">
+                        @foreach (var mood in group.Value)
+                        {
+                            var isSelected = selectedMoodIds.Contains(mood.Id);
+                            <button type="button"
+                                    class="mood-item @(isSelected ? "selected" : "")"
+                                    @onclick="() => ToggleMood(mood)">
+                                <span class="mood-emoji">@mood.Emoji</span>
+                                <span class="mood-name">@mood.Name</span>
+                                @if (isSelected)
+                                {
+                                    <span class="mood-check selected-tab">✓</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!Moods.Any())
+            {
+                <div class="empty-state">
+                    <span class="empty-icon">😊</span>
+                    <p>No moods available</p>
+                </div>
+            }
+        </div>
+
+        <div class="mood-filter-footer">
+            <div class="selected-count">
+                @selectedMoodIds.Count selected
+            </div>
+            <div class="footer-actions">
+                <Button Variant="ButtonVariant.Ghost" Text="Cancel" OnClick="Close" Style="font-weight: 600" />
+                <Button Variant="ButtonVariant.Primary" Text="Apply Moods" OnClick="ConfirmSelection" Style="font-weight: 600" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Mood> Moods { get; set; } = [];
+    [Parameter] public List<Mood> SelectedMoods { get; set; } = [];
+    [Parameter] public EventCallback<List<Mood>> OnMoodsSelected { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private HashSet<Guid> selectedMoodIds = new();
+
+    protected override void OnParametersSet()
+    {
+        selectedMoodIds = SelectedMoods.Select(m => m.Id).ToHashSet();
+    }
+
+    private Dictionary<string, List<Mood>> GetGroupedMoods()
+    {
+        return Moods
+            .GroupBy(m => m.Category)
+            .OrderBy(g => GetCategoryOrder(g.Key))
+            .ToDictionary(g => g.Key, g => g.OrderBy(m => m.Name).ToList());
+    }
+
+    private int GetCategoryOrder(string category)
+    {
+        return category switch
+        {
+            "Positive" => 1,
+            "Neutral" => 2,
+            "Negative" => 3,
+            _ => 4
+        };
+    }
+
+    private string GetGroupIcon(string category)
+    {
+        return category switch
+        {
+            "Positive" => "😊",
+            "Neutral" => "😐",
+            "Negative" => "😢",
+            _ => "😶"
+        };
+    }
+
+    private void ToggleMood(Mood mood)
+    {
+        if (selectedMoodIds.Contains(mood.Id))
+        {
+            selectedMoodIds.Remove(mood.Id);
+        }
+        else
+        {
+            selectedMoodIds.Add(mood.Id);
+        }
+    }
+
+    private async Task ConfirmSelection()
+    {
+        var selectedMoods = Moods
+            .Where(m => selectedMoodIds.Contains(m.Id))
+            .ToList();
+
+        await OnMoodsSelected.InvokeAsync(selectedMoods);
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

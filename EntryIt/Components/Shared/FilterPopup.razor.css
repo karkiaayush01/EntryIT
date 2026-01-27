@@ -123,3 +123,45 @@
 .theme-dark .filter-popup-footer {
     border-top-color: #2b2b2b;
 }
+
+/* Filter Chips */
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.chip-remove:hover {
+    transform: scale(1.2);
+}

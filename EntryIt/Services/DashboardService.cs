@@ -23,7 +23,7 @@ public class DashboardService : IDashboardService
     /// Gets the distribution of moods for the authenticated user's journals within the specified date range.
     /// </summary>
     /// <param name="filters">Filter criteria containing FromDate and ToDate for the date range.</param>
-    /// <returns>A <see cref="ServiceResult{List{MoodDistribution}}"/> containing a list of mood distributions with counts.</returns>
+    /// <returns>A <see cref="ServiceResult{T}"/> containing a list of mood distributions with counts.</returns>
     public async Task<ServiceResult<List<MoodDistribution>>> GetMoodDistribution(FilterDates filters)
     {
         try
@@ -117,7 +117,7 @@ public class DashboardService : IDashboardService
     /// Gets the word count distribution for the authenticated user's journals within the specified date range.
     /// </summary>
     /// <param name="filters">Filter criteria containing FromDate and ToDate for the date range.</param>
-    /// <returns>A <see cref="ServiceResult{List{WordCountDistributions}}"/> containing word counts per date.</returns>
+    /// <returns>A <see cref="ServiceResult{T}"/> containing word counts per date.</returns>
     public async Task<ServiceResult<List<WordCountDistributions>>> GetWordCountDistributions(FilterDates filters)
     {
         try
@@ -163,7 +163,7 @@ public class DashboardService : IDashboardService
     /// Gets the streak records (activity dates) for the authenticated user for a specific month.
     /// </summary>
     /// <param name="month">The month number (1-12) to retrieve streak records for.</param>
-    /// <returns>A <see cref="ServiceResult{List{StreakRecord}}"/> containing dates when the user had journal activity.</returns>
+    /// <returns>A <see cref="ServiceResult{T}"/> containing dates when the user had journal activity.</returns>
     public async Task<ServiceResult<List<StreakRecord>>> GetCurrentMonthStreak(int month)
     {
         try

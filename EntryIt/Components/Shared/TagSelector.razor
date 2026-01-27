@@ -48,22 +48,25 @@
             }
         </div>
 
-        <div class="add-custom-tag">
-            <input 
-                type="text" 
-                class="custom-tag-input bg-theme border-grey" 
-                placeholder="Add Custom Tag..." 
-                @bind-value="CustomTagName"
-                @bind-value:event="oninput"
-            />
-            <Button 
-                Variant="ButtonVariant.Primary"
-                Icon="tag"
-                Text="Add Custom Tag"
-                OnClick="OnAddCustomTag"
-                Disabled="@(ValidationUtils.IsBlank(CustomTagName))"
-            />
-        </div>
+        @if (ShowCustomTagsForm)
+        {
+            <div class="add-custom-tag">
+                <input 
+                    type="text"
+                    class="custom-tag-input bg-theme border-grey"
+                    placeholder="Add Custom Tag..."
+                    @bind-value="CustomTagName"
+                    @bind-value:event="oninput" 
+                />
+                <Button 
+                    Variant="ButtonVariant.Primary"
+                    Icon="tag"
+                    Text="Add Custom Tag"
+                    OnClick="OnAddCustomTag"
+                    Disabled="@(ValidationUtils.IsBlank(CustomTagName))" 
+                />
+            </div>
+        }
         
         <div class="tag-selector-footer">
             <div class="selected-count">
@@ -79,13 +82,12 @@
 
 @code {
 
-
-
     [Parameter] public List<Tag> Tags { get; set; } = [];
     [Parameter] public List<Tag> SelectedTags { get; set; } = [];
     [Parameter] public EventCallback<List<Tag>> OnTagsSelected { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<Tag> OnCustomTagAdded { get; set; }
+    [Parameter] public bool ShowCustomTagsForm { get; set; } = false;
 
     private HashSet<Guid> selectedTagIds = new();
     private string CustomTagName { get; set; } = string.Empty;

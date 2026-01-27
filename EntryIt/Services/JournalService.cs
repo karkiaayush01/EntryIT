@@ -355,6 +355,28 @@ public  class JournalService: IJournalService
 
             query = query.Where(j => j.SaveDate <= filters.ToDate.Date);
 
+            // Apply mood filters if provided
+            if (filters.Moods != null && filters.Moods.Any())
+            {
+                query = query.Where(j =>
+                    filters.Moods.Contains(j.PrimaryMood) ||
+                    filters.Moods.Contains(j.SecondaryMood1) ||
+                    filters.Moods.Contains(j.SecondaryMood2)
+                );
+            }
+
+            // Apply tag filters if provided
+            if (filters.Tags != null && filters.Tags.Any())
+            {
+                // Get journals that have at least one of the specified tags
+                var journalsWithTags = _context.Journal_Tags
+                    .Where(jt => filters.Tags.Contains(jt.TagId))
+                    .Select(jt => jt.JournalId)
+                    .Distinct();
+
+                query = query.Where(j => journalsWithTags.Contains(j.Id));
+            }
+
             // Order by SaveDate descending (most recent first)
             query = query.OrderByDescending(j => j.SaveDate);
 

@@ -24,12 +24,37 @@
                 FromDate="@FromDate"
                 ToDate="@ToDate"
                 OnApplyFilter="OnApplyFilter"
+                ShowMoodFilter="true"
+                ShowTagFilter="true"
+                Moods="Moods"
+                Tags="Tags"
             />
         </div>
 
-        @if(FromDate != null)
+        @* Show what filters are currently active *@
+        @if ((FromDate != null) || (SelectedMoodIds.Count > 0) || (SelectedTagIds.Count > 0))
         {
-            <p class="filters"><span>Filters:</span> <span class="date-filters">@(FromDate?.ToString("dd MMM yyyy") + " To " + ToDate.ToString("dd MMM yyyy"))</span></p>
+
+            <p class="filters">
+                <span>Filters:</span> 
+
+                @if (FromDate != null)
+                {
+
+                    <span class="date-filters">@(FromDate?.ToString("dd MMM yyyy") + " To " + ToDate.ToString("dd MMM yyyy"))</span>
+
+                }
+
+                @if (SelectedMoodIds.Count > 0)
+                {
+                    <span class="date-filters">Moods (@SelectedMoodIds.Count)</span>
+                }
+
+                @if (SelectedTagIds.Count > 0)
+                {
+                    <span class="date-filters">Tags (@SelectedTagIds.Count)</span>
+                }
+            </p>
         }
 
         <div class="search-results" style="margin-top: 16px;">
@@ -77,6 +102,8 @@
     private String SearchTerm { get; set; } = string.Empty;
     private DateTime? FromDate = null;
     private DateTime ToDate = DateTime.Now.Date;
+    private List<Guid> SelectedMoodIds = [];
+    private List<Guid> SelectedTagIds = [];
     private JournalSearchResult? SearchResult = null;
     private int CurrentPage = 1;
     private int PerPage = 3;
@@ -94,6 +121,8 @@
             SearchKey = SearchTerm,
             FromDate = FromDate,
             ToDate = ToDate,
+            Moods = SelectedMoodIds,
+            Tags = SelectedTagIds,
             Page = CurrentPage,
             PerPage = PerPage
         };
@@ -136,6 +165,8 @@
     {
         FromDate = filterDates.FromDate;
         ToDate = filterDates.ToDate;
+        SelectedMoodIds = filterDates.MoodIds;
+        SelectedTagIds = filterDates.TagIds;
         CurrentPage = 1; // Reset to first page on filter change
         await GetSearchResult();
     }

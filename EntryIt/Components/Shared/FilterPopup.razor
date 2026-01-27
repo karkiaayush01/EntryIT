@@ -1,5 +1,5 @@
 @* FilterPopup.razor *@
-@* A Popup component for filtering journals by date range *@
+@* A Popup component for filtering journals by date range, moods, and tags *@
 
 <div class="filter-popup-wrapper">
     <Button
@@ -17,9 +17,9 @@
         <div class="filter-popup" @onclick:stopPropagation>
             <div class="filter-popup-header">
                 <h4>Filter Journals</h4>
-                <Button 
-					Text="�"
-					Variant="ButtonVariant.Secondary" 
+                <Button
+					Text="×"
+					Variant="ButtonVariant.Secondary"
 					OnClick="ClosePopup"
 					Title="Close"
 					Style="border-radius: 50%; font-size: 24px; padding: 4px; width: 2rem; height: 2rem"
@@ -29,41 +29,112 @@
             <div class="filter-popup-body">
                 <div class="filter-field">
                     <label class="filter-label">From Date</label>
-                    <input 
-                        type="date" 
+                    <input
+                        type="date"
                         class="filter-date-input"
-                        value="@(FromDate?.ToString("yyyy-MM-dd"))"
+                        value="@(TempFromDate?.ToString("yyyy-MM-dd"))"
                         @onchange="OnFromDateChange"
-                        max="@ToDate.ToString("yyyy-MM-dd")"
+                        max="@TempToDate.ToString("yyyy-MM-dd")"
                     />
                 </div>
 
                 <div class="filter-field">
                     <label class="filter-label">To Date</label>
-                    <input 
-                        type="date" 
+                    <input
+                        type="date"
                         class="filter-date-input"
-                        value="@ToDate.ToString("yyyy-MM-dd")"
+                        value="@TempToDate.ToString("yyyy-MM-dd")"
                         @onchange="OnToDateChange"
-                        min="@(FromDate?.ToString("yyyy-MM-dd"))"
+                        min="@(TempFromDate?.ToString("yyyy-MM-dd"))"
                         max="@DateTime.Now.ToString("yyyy-MM-dd")"
                     />
                 </div>
+
+                @if (ShowMoodFilter && Moods.Any())
+                {
+                    <div class="filter-field">
+                        <label class="filter-label">Moods</label>
+                        <div class="filter-chips">
+                            @if (selectedMoods.Any())
+                            {
+                                @foreach (var mood in selectedMoods)
+                                {
+                                    <span class="filter-chip">
+                                        @mood.Emoji @mood.Name
+                                        <button type="button" class="chip-remove" @onclick="() => RemoveMood(mood)">×</button>
+                                    </span>
+                                }
+                            }
+                            <Button
+                                Text="+ Add Moods"
+                                Variant="ButtonVariant.Secondary"
+                                OnClick="OpenMoodSelector"
+                                Style="padding: 6px 12px; font-size: 13px;"
+                            />
+                        </div>
+                    </div>
+                }
+
+                @if (ShowTagFilter && Tags.Any())
+                {
+                    <div class="filter-field">
+                        <label class="filter-label">Tags</label>
+                        <div class="filter-chips">
+                            @if (selectedTags.Any())
+                            {
+                                @foreach (var tag in selectedTags)
+                                {
+                                    <span class="filter-chip">
+                                        @tag.Name
+                                        <button type="button" class="chip-remove" @onclick="() => RemoveTag(tag)">×</button>
+                                    </span>
+                                }
+                            }
+                            <Button
+                                Text="+ Add Tags"
+                                Variant="ButtonVariant.Secondary"
+                                OnClick="OpenTagSelector"
+                                Style="padding: 6px 12px; font-size: 13px;"
+                            />
+                        </div>
+                    </div>
+                }
             </div>
 
             <div class="filter-popup-footer">
-                <Button 
-                    Text="Clear" 
-                    Variant="ButtonVariant.Ghost" 
+                <Button
+                    Text="Clear"
+                    Variant="ButtonVariant.Ghost"
                     OnClick="OnClear"
                 />
-                <Button 
-                    Text="Apply" 
-                    Variant="ButtonVariant.Primary" 
+                <Button
+                    Text="Apply"
+                    Variant="ButtonVariant.Primary"
                     OnClick="OnApply"
                 />
             </div>
         </div>
+    }
+
+    @if (showMoodSelector)
+    {
+        <MoodFilterSelector
+            Moods="Moods"
+            SelectedMoods="selectedMoods"
+            OnMoodsSelected="HandleMoodsSelected"
+            OnClose="CloseMoodSelector"
+        />
+    }
+
+    @if (showTagSelector)
+    {
+        <TagSelector
+            Tags="Tags"
+            SelectedTags="selectedTags"
+            OnTagsSelected="HandleTagsSelected"
+            OnClose="CloseTagSelector"
+            ShowCustomTagsForm="false"
+        />
     }
 </div>
 
@@ -71,10 +142,18 @@
     [Parameter] public DateTime? FromDate { get; set; }
     [Parameter] public DateTime ToDate { get; set; } = DateTime.Now.Date;
     [Parameter] public EventCallback<FilterDates> OnApplyFilter { get; set; }
+    [Parameter] public bool ShowMoodFilter { get; set; } = false;
+    [Parameter] public bool ShowTagFilter { get; set; } = false;
+    [Parameter] public List<Mood> Moods { get; set; } = [];
+    [Parameter] public List<Tag> Tags { get; set; } = [];
 
     private bool IsOpen { get; set; } = false;
     private DateTime? TempFromDate { get; set; }
     private DateTime TempToDate { get; set; }
+    private List<Mood> selectedMoods = [];
+    private List<Tag> selectedTags = [];
+    private bool showMoodSelector = false;
+    private bool showTagSelector = false;
 
     protected override void OnParametersSet()
     {
@@ -113,17 +192,63 @@
         }
     }
 
+    private void OpenMoodSelector()
+    {
+        showMoodSelector = true;
+    }
+
+    private void CloseMoodSelector()
+    {
+        showMoodSelector = false;
+    }
+
+    private void HandleMoodsSelected(List<Mood> moods)
+    {
+        selectedMoods = moods;
+        showMoodSelector = false;
+    }
+
+    private void RemoveMood(Mood mood)
+    {
+        selectedMoods.Remove(mood);
+    }
+
+    private void OpenTagSelector()
+    {
+        showTagSelector = true;
+    }
+
+    private void CloseTagSelector()
+    {
+        showTagSelector = false;
+    }
+
+    private void HandleTagsSelected(List<Tag> tags)
+    {
+        selectedTags = tags;
+        showTagSelector = false;
+    }
+
+    private void RemoveTag(Tag tag)
+    {
+        selectedTags.Remove(tag);
+    }
+
     private async Task OnClear()
     {
         TempFromDate = null;
         TempToDate = DateTime.Now.Date;
-        
+        selectedMoods.Clear();
+        selectedTags.Clear();
+
         var filterDates = new FilterDates
         {
             FromDate = null,
-            ToDate = DateTime.Now.Date
+            ToDate = DateTime.Now.Date,
+            MoodIds = [],
+            TagIds = []
         };
-        
+
         await OnApplyFilter.InvokeAsync(filterDates);
         IsOpen = false;
     }
@@ -133,9 +258,11 @@
         var filterDates = new FilterDates
         {
             FromDate = TempFromDate,
-            ToDate = TempToDate
+            ToDate = TempToDate,
+            MoodIds = selectedMoods.Select(m => m.Id).ToList(),
+            TagIds = selectedTags.Select(t => t.Id).ToList()
         };
-        
+
         await OnApplyFilter.InvokeAsync(filterDates);
         IsOpen = false;
     }
