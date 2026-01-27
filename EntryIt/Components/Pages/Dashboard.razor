@@ -71,6 +71,15 @@
                 </div>
             </div>
 
+            @* Filter Dates *@
+            <div class="filter-popup">
+                <FilterPopup 
+                    FromDate="@FromDate"
+                    ToDate="@ToDate"
+                    OnApplyFilter="OnApplyFilter" 
+                />
+            </div>
+
             @* Charts Section *@
             <div class="charts-section">
                 <div class="chart-container">
@@ -135,6 +144,8 @@
 
 @code{
 
+
+
     private UserViewModel? CurrentUser { get; set; }
     private bool IsLoading = true;
     private int SelectedMonth = DateTime.Now.Month;
@@ -144,6 +155,8 @@
     private List<StreakRecord> StreakRecords = [];
     private MoodViewModel? MostUsedMood;
     private int AverageWordCount = 0;
+    private DateTime FromDate = DateTime.Now.AddDays(-30).Date;
+    private DateTime ToDate = DateTime.Now.Date;
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,8 +183,8 @@
             // Create date filter for last 30 days
             var filters = new FilterDates
             {
-                FromDate = DateTime.Now.AddDays(-30).Date,
-                ToDate = DateTime.Now.Date
+                FromDate = FromDate,
+                ToDate = ToDate
             };
 
             // Fetch mood distribution
@@ -207,6 +220,14 @@
 
         IsLoading = false;
         StateHasChanged();
+    }
+
+    private async Task OnApplyFilter(FilterDates filterDates)
+    {
+        FromDate = filterDates.FromDate ?? DateTime.Now.AddDays(-30).Date;
+        ToDate = filterDates.ToDate;
+        await LoadDashboardData();
+        await RenderCharts();
     }
 
     private async Task RenderCharts()

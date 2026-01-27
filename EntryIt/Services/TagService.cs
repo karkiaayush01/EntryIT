@@ -17,7 +17,7 @@ public class TagService: ITagService
     /// <summary>
     /// Get all the tags from the database
     /// </summary>
-    /// <returns>List of all the tags in the database</returns>
+    /// <returns><see cref="ServiceResult{T}" />: List of all the <see cref="Tag"/> in the database</returns>
     public async Task<ServiceResult<List<Tag>>> GetTags()
     {
         try
@@ -28,6 +28,32 @@ public class TagService: ITagService
         catch (Exception ex)
         {
             return ServiceResult<List<Tag>>.FailureResult($"Failed to get tags {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Add a custom tag
+    /// </summary>
+    /// <param name="name">Name of the tag</param>
+    /// <returns>An instance of <see cref="ServiceResult{T}"/>. The Success property of this instance will indicate whether the tag was successfully added.</returns>
+    public async Task<ServiceResult<Tag>> AddCustomTag(string name)
+    {
+        try
+        {
+            Tag tag = new ()
+            {
+                Name = name,
+                Type = "custom"
+            };
+
+            _context.Tags.Add(tag);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<Tag>.SuccessResult(tag);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<Tag>.FailureResult($"Failed to add custom tag: {ex.Message}");
         }
     }
 }

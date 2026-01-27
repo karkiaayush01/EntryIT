@@ -6,4 +6,6 @@ using EntryIt.Entities;
 public interface ITagService
 {
     Task<ServiceResult<List<Tag>>> GetTags();
+
+    Task<ServiceResult<Tag>> AddCustomTag(string name);
 }

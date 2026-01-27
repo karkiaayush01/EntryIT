@@ -12,13 +12,14 @@
 <div class="home-container">
     @if (IsSaveModalOpen)
     {
-        <SaveJournalModal 
+        <SaveJournalModal
             IsOpen="IsSaveModalOpen"
             IsOpenChanged="SetIsSaveModelOpen"
             OnSave="SubmitJournal"
             Moods="Moods"
-            Tags="Tags" 
+            Tags="Tags"
             TodayJournal="todaysJournal"
+            OnTagAdded="HandleNewTag"
         />
     }
 
@@ -320,6 +321,14 @@
         LoggerService.LogInfo("Auth service updated. Setting new user");
         currentUser = AuthService.GetCurrentUser();
         StateHasChanged();
+    }
+
+    private void HandleNewTag(Tag newTag)
+    {
+        if (!Tags.Any(t => t.Id == newTag.Id))
+        {
+            Tags.Add(newTag);
+        }
     }
 
     public void Dispose()

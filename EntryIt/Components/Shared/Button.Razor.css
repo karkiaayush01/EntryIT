@@ -2,6 +2,7 @@
     border: none;
     padding: 10px 20px;
     display: flex;
+    gap: 8px;
     align-items: center;
     justify-content: center;
     cursor: pointer;

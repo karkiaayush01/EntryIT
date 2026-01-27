@@ -114,7 +114,7 @@ html, body, .page {
     --gradient_bg: linear-gradient(29.864deg, #00C6FF 38%, #0072FF 75%);
     --radial-gradient-bg: radial-gradient( circle, #00C6FF 18%, #0072FF 83% );
     --selected-tab: #034596;
-    --hovered-tab: #FF7E5F;
+    --hovered-tab: #1E8BFF;
     --theme-selector-active-bg: rgba(0, 114, 255, 0.7);
 }
 
@@ -195,5 +195,11 @@ bg-theme {
 .ql-snow .ql-picker-options .ql-picker-item {
     color: var(--text);
 }
+
+/* Calendar picker style override */
+.theme-dark ::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
 
 

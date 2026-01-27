@@ -260,6 +260,24 @@
     color: #999;
 }
 
+/* Add custom tag */
+.add-custom-tag {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.custom-tag-input {
+    border-radius: 8px;
+    padding-left: 8px;
+    background: var(--theme);
+    color: var(--text);
+    width: 300px;
+}
+
+
 /* Footer */
 .tag-selector-footer {
     display: flex;

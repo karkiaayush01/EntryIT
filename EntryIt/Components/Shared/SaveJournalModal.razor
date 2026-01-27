@@ -67,10 +67,13 @@
 
             @if (showTagSelector)
             {
-                <TagSelector Tags="Tags"
-                             SelectedTags="selectedTags"
-                             OnTagsSelected="HandleTagsSelected"
-                             OnClose="CloseTagSelector" />
+                <TagSelector
+                    Tags="Tags"
+                    SelectedTags="selectedTags"
+                    OnTagsSelected="HandleTagsSelected"
+                    OnClose="CloseTagSelector"
+                    OnCustomTagAdded="HandleCustomTagAdded"
+                />
             }
 
             <div class="lock-section">
@@ -118,6 +121,7 @@
     [Parameter] public List<Mood> Moods { get; set; } = [];
     [Parameter] public List<Tag> Tags { get; set; } = [];
     [Parameter] public JournalViewModel? TodayJournal { get; set; } = null;
+    [Parameter] public EventCallback<Tag> OnTagAdded { get; set; }
 
     private string title = string.Empty;
     private Mood? primaryMood = null;
@@ -193,6 +197,12 @@
     private void RemoveTag(Tag tag)
     {
         selectedTags.Remove(tag);
+    }
+
+    private async Task HandleCustomTagAdded(Tag newTag)
+    {
+        Tags.Add(newTag);
+        await OnTagAdded.InvokeAsync(newTag);
     }
 
     private bool IsAlreadySelected(Mood? mood, string exclude)
