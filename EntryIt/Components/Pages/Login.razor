@@ -58,17 +58,11 @@
     private string email = string.Empty;
     private string password = string.Empty;
     private bool showThemeSelector = false;
-    private bool devMode = true;
 
     private string CurrentAccent => ThemeService.GetCurrentAccent();
 
     private async Task LoginUser()
     {
-        if(devMode)
-        {
-            email = "karkiaayush01";
-            password = "test@123";
-        }
 
         if(ValidationUtils.IsBlank([email, password]))
         {
