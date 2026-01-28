@@ -42,6 +42,9 @@ public class AuthService : IAuthService
         return CurrentUser;
     }
 
+    /// <summary>
+    /// Refresh user data and notify subscribers
+    /// </summary>
     public async Task RefreshUser()
     {
         _logger.LogInfo("RefreshUser called");

@@ -14,6 +14,10 @@ public class MoodService : IMoodService
         _context = context;
     }
 
+    /// <summary>
+    /// Get all moods
+    /// </summary>
+    /// <returns>A <see cref="ServiceResult{T}"/> that contains <see cref="List{T}"/> of <see cref="Mood"/></returns>
     public async Task<ServiceResult<List<Mood>>> GetMoods()
     {
         try

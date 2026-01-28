@@ -47,6 +47,21 @@ public  class JournalService: IJournalService
         };
     }
 
+    /// <summary>
+    /// Save a Particular Journal (Create / Update)
+    /// </summary>
+    /// <param name="journalTitle">Title of journal</param>
+    /// <param name="content">Markup content of Journal</param>
+    /// <param name="contentRaw">Raw content of journal</param>
+    /// <param name="wordCount">Word count of journal</param>
+    /// <param name="primaryMood">Primary Mood of journal</param>
+    /// <param name="secondaryMood1">Secondary mood of journal (Optional)</param>
+    /// <param name="secondaryMood2">Secondary mood of journal (Optional)</param>
+    /// <param name="lockJournal">Flag to determine whether to lock journal</param>
+    /// <param name="isDefaultPassword">Flag to determine if it is the default user password</param>
+    /// <param name="lockPassword">Customm password if provided</param>
+    /// <param name="tags">Selected tags for a journal</param>
+    /// <returns>An instance of <see cref="ServiceResult{T}"/> of <see cref="SaveResponse"/></returns>
     public async Task<ServiceResult<SaveResponse>> SaveJournal(
         string journalTitle,
         string content,
@@ -204,7 +219,10 @@ public  class JournalService: IJournalService
         }
     }
 
-    // Only need success or failure status so no need for a response model
+    /// <summary>
+    /// Delete journal entry for the day
+    /// </summary>
+    /// <returns>An instance of <see cref="ServiceResult{T}"/> of <see cref="object"/>? The success/failure status of ServiceResult determines the result of the operation.</returns>
     public async Task<ServiceResult<object?>> DeleteJournal()
     {
         try
@@ -541,7 +559,7 @@ public  class JournalService: IJournalService
     /// </summary>
     /// <param name="JournalId">JournalId needed to be unlocked</param>
     /// <param name="password">Password provided by user</param>
-    /// <returns>A <see cref="ServiceResult{JournalUnlockResponse}"/> containing a <see cref="JournalUnlockResponse"/> indicating whether the journal was successfully unlocked, including failure details if the operation did not succeed.</returns>
+    /// <returns>A <see cref="ServiceResult{T}"/> containing a <see cref="JournalUnlockResponse"/> indicating whether the journal was successfully unlocked, including failure details if the operation did not succeed.</returns>
     public async Task<ServiceResult<JournalUnlockResponse>> UnlockJournal(Guid JournalId, string password)
     {
         try

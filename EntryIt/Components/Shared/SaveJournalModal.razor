@@ -267,6 +267,18 @@
 
     private async Task HandleSubmit()
     {
+        if(ValidationUtils.IsBlank(title))
+        {
+            Toast.Error("Empty Title.");
+            return;
+        }
+
+        if(!sameAsUserPassword && ValidationUtils.IsBlank(_password))
+        {
+            Toast.Error("Empty password.");
+            return;
+        }
+
         var journalData = new JournalDataFromModal
         {
             Title = title,
